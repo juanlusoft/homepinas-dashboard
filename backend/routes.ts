@@ -37,6 +37,8 @@ const homestoreRoutes       = require('./routes/homestore');
 const stacksRoutes          = require('./routes/stacks');
 const activeDirectoryRoutes = require('./routes/active-directory');
 const vpnRoutes             = require('./routes/vpn');
+const cloudBackupRoutes     = require('./routes/cloud-backup');
+const cloudSyncRoutes       = require('./routes/cloud-sync');
 
 // ---------------------------------------------------------------------------
 
@@ -143,6 +145,10 @@ function registerRoutes(app: Express, version: string): void {
 
     // VPN Server (WireGuard)
     app.use('/api/vpn', vpnRoutes);
+
+    // Cloud Backup and Sync
+    app.use('/api/cloud-backup', cloudBackupRoutes);
+    app.use('/api/cloud-sync',   cloudSyncRoutes);
 
     const { initScheduler } = require('./routes/scheduler');
     initScheduler();

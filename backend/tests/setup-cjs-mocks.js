@@ -53,6 +53,16 @@ const ROUTE_FILES = [
     path.resolve(SETUP_DIR, '../routes/vpn.js'),
     path.resolve(SETUP_DIR, '../routes/notifications.js'),
     path.resolve(SETUP_DIR, '../routes/scheduler.js'),
+    path.resolve(SETUP_DIR, '../routes/terminal.js'),
+    path.resolve(SETUP_DIR, '../routes/cloud-backup.js'),
+    path.resolve(SETUP_DIR, '../routes/cloud-sync.js'),
+    path.resolve(SETUP_DIR, '../routes/active-backup.js'),
+    path.resolve(SETUP_DIR, '../routes/active-directory.js'),
+    path.resolve(SETUP_DIR, '../routes/shortcuts.js'),
+    path.resolve(SETUP_DIR, '../routes/stacks.js'),
+    path.resolve(SETUP_DIR, '../routes/ddns.js'),
+    path.resolve(SETUP_DIR, '../routes/backup.js'),
+    path.resolve(SETUP_DIR, '../routes/homestore.js'),
 ];
 
 /**
@@ -105,6 +115,7 @@ async function seedRegistry(specs) {
 // These match the vi.mock() specifiers used in route test files
 const ALL_MOCK_CANDIDATES = [
     '../data',
+    '../terminal-ws',
     '../session',
     '../csrf',
     '../sanitize',
