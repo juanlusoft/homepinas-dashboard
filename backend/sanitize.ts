@@ -9,11 +9,22 @@
 const path = require('path');
 const fs = require('fs');
 
-function toPosixPath(input) {
+interface ComposeValidationResult {
+    valid: boolean;
+    error?: string;
+}
+
+interface ValidatedDisk {
+    id: string;
+    role: string;
+    format: boolean;
+}
+
+function toPosixPath(input: unknown): string {
     return String(input).replace(/\\/g, '/');
 }
 
-function isWithinBase(targetPath, basePath) {
+function isWithinBase(targetPath: string, basePath: string): boolean {
     return targetPath === basePath || targetPath.startsWith(basePath + '/');
 }
 
@@ -21,7 +32,7 @@ function isWithinBase(targetPath, basePath) {
 // USERNAME SANITIZATION
 // ============================================================================
 
-function sanitizeUsername(username) {
+function sanitizeUsername(username: unknown): string | null {
     if (!username || typeof username !== 'string') return null;
     const sanitized = username.replace(/[^a-zA-Z0-9_-]/g, '');
     if (sanitized.length < 3 || sanitized.length > 32) return null;
@@ -31,11 +42,11 @@ function sanitizeUsername(username) {
     return sanitized;
 }
 
-function validateUsername(username) {
+function validateUsername(username: unknown): boolean {
     return sanitizeUsername(username) !== null;
 }
 
-function validatePassword(password) {
+function validatePassword(password: unknown): boolean {
     if (!password || typeof password !== 'string') return false;
     if (password.length < 6 || password.length > 128) return false;
     return true;
@@ -45,7 +56,7 @@ function validatePassword(password) {
 // STRING SANITIZATION
 // ============================================================================
 
-function sanitizeString(str) {
+function sanitizeString(str: unknown): string {
     if (!str || typeof str !== 'string') return '';
     return str
         .replace(/&/g, '&amp;')
@@ -60,7 +71,7 @@ function sanitizeString(str) {
 // DISK AND PATH SANITIZATION
 // ============================================================================
 
-function sanitizeDiskId(diskId) {
+function sanitizeDiskId(diskId: unknown): string | null {
     if (!diskId || typeof diskId !== 'string') return null;
     const id = diskId.replace(/^\/dev\//, '');
     const validPatterns = [
@@ -80,7 +91,7 @@ function sanitizeDiskId(diskId) {
     return null;
 }
 
-function sanitizeDiskPath(diskPath) {
+function sanitizeDiskPath(diskPath: unknown): string | null {
     if (!diskPath || typeof diskPath !== 'string') return null;
     if (!diskPath.startsWith('/dev/')) return null;
     const id = sanitizeDiskId(diskPath);
@@ -88,7 +99,7 @@ function sanitizeDiskPath(diskPath) {
     return `/dev/${id}`;
 }
 
-function sanitizePathWithinBase(inputPath, baseDir) {
+function sanitizePathWithinBase(inputPath: string, baseDir: string): string | null {
     if (!inputPath || typeof inputPath !== 'string') return null;
     if (!baseDir || typeof baseDir !== 'string') return null;
 
@@ -124,23 +135,34 @@ function sanitizePathWithinBase(inputPath, baseDir) {
     }
 }
 
-function sanitizePath(inputPath) {
+function sanitizePath(inputPath: unknown): string | null {
     if (!inputPath || typeof inputPath !== 'string') return null;
     let sanitized = inputPath.replace(/\0/g, '');
     sanitized = toPosixPath(sanitized);
     const normalized = path.posix.normalize(sanitized);
+
+    // Block traversal patterns
     if (normalized === '..' || normalized.startsWith('../') || normalized.includes('/../')) return null;
+
+    // Block paths that normalize to root or system directories
+    // Block critical system directories: exposing these would allow
+    // information disclosure (/proc, /sys) or system modification (/boot, /dev, /root)
+    const dangerousPaths = ['/', '/etc', '/proc', '/sys', '/dev', '/root', '/boot'];
+    if (dangerousPaths.includes(normalized) || dangerousPaths.some(d => normalized.startsWith(d + '/'))) {
+        return null;
+    }
+
     if (!/^[a-zA-Z0-9/_.-]+$/.test(normalized)) return null;
     return normalized;
 }
 
-function escapeShellArg(arg) {
+function escapeShellArg(arg: unknown): string {
     if (arg === null || arg === undefined) return "''";
     if (typeof arg !== 'string') return "''";
     return "'" + arg.replace(/'/g, "'\\''") + "'";
 }
 
-function sanitizeShellArg(arg) {
+function sanitizeShellArg(arg: unknown): string {
     return escapeShellArg(arg);
 }
 
@@ -148,16 +170,16 @@ function sanitizeShellArg(arg) {
 // DOCKER VALIDATION
 // ============================================================================
 
-function validateDockerAction(action) {
+function validateDockerAction(action: string): boolean {
     return ['start', 'stop', 'restart'].includes(action);
 }
 
-function validateContainerId(containerId) {
+function validateContainerId(containerId: unknown): boolean {
     if (!containerId || typeof containerId !== 'string') return false;
     return /^[a-f0-9]{12,64}$/i.test(containerId);
 }
 
-function sanitizeComposeName(name) {
+function sanitizeComposeName(name: unknown): string | null {
     if (!name || typeof name !== 'string') return null;
     const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, '');
     if (sanitized.length === 0 || sanitized.length > 50) return null;
@@ -165,7 +187,7 @@ function sanitizeComposeName(name) {
     return sanitized;
 }
 
-function validateComposeContent(content) {
+function validateComposeContent(content: unknown): ComposeValidationResult {
     if (!content || typeof content !== 'string') {
         return { valid: false, error: 'Content must be a string' };
     }
@@ -175,9 +197,34 @@ function validateComposeContent(content) {
     if (content.length > 100000) {
         return { valid: false, error: 'Content too large (max 100KB)' };
     }
-    if (!content.includes('services') && !content.includes('version')) {
-        return { valid: false, error: 'Invalid docker-compose format' };
+
+    // Parse as YAML to validate structure
+    let parsed: unknown;
+    try {
+        const yaml = require('js-yaml');
+        parsed = yaml.load(content);
+    } catch (e: any) {
+        if (e.code === 'MODULE_NOT_FOUND') {
+            console.warn('[sanitize] js-yaml not available, falling back to regex validation');
+            // js-yaml not available: fall back to strict keyword check
+            // Require 'services:' with a colon to avoid plain-text false positives
+            if (!/^\s*services\s*:/m.test(content)) {
+                return { valid: false, error: 'docker-compose must have a "services" key' };
+            }
+            return { valid: true };
+        }
+        return { valid: false, error: `Invalid YAML: ${e.message}` };
     }
+
+    if (!parsed || typeof parsed !== 'object') {
+        return { valid: false, error: 'docker-compose must be a YAML object' };
+    }
+
+    // A valid docker-compose file must have a 'services' key
+    if (!(parsed as any).services || typeof (parsed as any).services !== 'object') {
+        return { valid: false, error: 'docker-compose must have a "services" key' };
+    }
+
     return { valid: true };
 }
 
@@ -185,37 +232,37 @@ function validateComposeContent(content) {
 // SYSTEM VALIDATION
 // ============================================================================
 
-function validateSystemAction(action) {
+function validateSystemAction(action: string): boolean {
     return ['reboot', 'shutdown'].includes(action);
 }
 
-function validateFanId(fanId) {
-    const num = parseInt(fanId);
+function validateFanId(fanId: unknown): number | null {
+    const num = parseInt(fanId as string);
     if (isNaN(num) || num < 1 || num > 10) return null;
     return num;
 }
 
-function validateFanSpeed(speed) {
-    const num = parseInt(speed);
+function validateFanSpeed(speed: unknown): number | null {
+    const num = parseInt(speed as string);
     if (isNaN(num) || num < 0 || num > 100) return null;
     return num;
 }
 
-function validateFanMode(mode) {
+function validateFanMode(mode: unknown): string | null {
     const validModes = ['silent', 'balanced', 'performance'];
-    return validModes.includes(mode) ? mode : null;
+    return validModes.includes(mode as string) ? (mode as string) : null;
 }
 
 // ============================================================================
 // NETWORK VALIDATION
 // ============================================================================
 
-function validateInterfaceName(name) {
+function validateInterfaceName(name: unknown): boolean {
     if (!name || typeof name !== 'string') return false;
     return /^[a-z0-9:._-]{1,15}$/i.test(name);
 }
 
-function validateIPv4(ip) {
+function validateIPv4(ip: unknown): boolean {
     if (!ip || typeof ip !== 'string') return false;
     const parts = ip.split('.');
     if (parts.length !== 4) return false;
@@ -227,7 +274,7 @@ function validateIPv4(ip) {
     return true;
 }
 
-function validateSubnetMask(mask) {
+function validateSubnetMask(mask: string): boolean {
     if (!validateIPv4(mask)) return false;
     const validOctets = [0, 128, 192, 224, 240, 248, 252, 254, 255];
     const parts = mask.split('.').map(Number);
@@ -244,40 +291,40 @@ function validateSubnetMask(mask) {
 // STORAGE VALIDATION
 // ============================================================================
 
-function validateDiskRole(role) {
+function validateDiskRole(role: unknown): string | null {
     const validRoles = ['data', 'parity', 'cache', 'none'];
-    return validRoles.includes(role) ? role : null;
+    return validRoles.includes(role as string) ? (role as string) : null;
 }
 
-function validateDiskConfig(disks) {
+function validateDiskConfig(disks: unknown): ValidatedDisk[] | null {
     if (!Array.isArray(disks)) return null;
     if (disks.length === 0 || disks.length > 20) return null;
-    const validated = [];
+    const validated: ValidatedDisk[] = [];
     for (const disk of disks) {
         if (!disk || typeof disk !== 'object') return null;
-        const id = sanitizeDiskId(disk.id);
+        const id = sanitizeDiskId((disk as any).id);
         if (!id) return null;
-        const role = validateDiskRole(disk.role);
+        const role = validateDiskRole((disk as any).role);
         if (!role) return null;
-        const format = disk.format === true;
+        const format = (disk as any).format === true;
         validated.push({ id, role, format });
     }
     return validated;
 }
 
-function validatePositiveInt(value, max = Number.MAX_SAFE_INTEGER) {
-    const num = parseInt(value);
+function validatePositiveInt(value: unknown, max: number = Number.MAX_SAFE_INTEGER): number | null {
+    const num = parseInt(value as string);
     if (isNaN(num) || num < 1 || num > max) return null;
     return num;
 }
 
-function validateNonNegativeInt(value, max = Number.MAX_SAFE_INTEGER) {
-    const num = parseInt(value);
+function validateNonNegativeInt(value: unknown, max: number = Number.MAX_SAFE_INTEGER): number | null {
+    const num = parseInt(value as string);
     if (isNaN(num) || num < 0 || num > max) return null;
     return num;
 }
 
-function sanitizeForLog(str) {
+function sanitizeForLog(str: unknown): string {
     if (!str || typeof str !== 'string') return '[invalid]';
     return str
         .replace(/password[=:]\s*\S+/gi, 'password=[REDACTED]')
