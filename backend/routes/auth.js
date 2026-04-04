@@ -188,11 +188,6 @@ router.post('/login/2fa', async (req, res) => {
             return res.status(401).json({ error: 'Invalid or expired pending token' });
         }
 
-        if (Date.now() > entry.expires) {
-            pendingTokens.delete(pendingToken);
-            return res.status(401).json({ error: 'Pending token has expired. Please log in again.' });
-        }
-
         const data = getData();
         if (!data.user || data.user.username !== entry.username) {
             return res.status(401).json({ error: 'User not found' });

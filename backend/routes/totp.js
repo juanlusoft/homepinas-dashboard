@@ -116,11 +116,6 @@ router.post('/verify', (req, res, next) => {
             return res.status(400).json({ error: 'No pending TOTP setup. Call /api/totp/setup first.' });
         }
 
-        if (Date.now() > pending.expires) {
-            pendingSecrets.delete(sessionId);
-            return res.status(400).json({ error: 'TOTP setup expired. Call /api/totp/setup again.' });
-        }
-
         const isValid = authenticator.verify({ token: String(token), secret: pending.secret });
         if (!isValid) {
             return res.status(400).json({ error: 'Invalid TOTP token' });
