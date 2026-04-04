@@ -12,7 +12,18 @@ const path = require('path');
 
 const DATA_FILE = path.join(__dirname, '..', 'config', 'data.json');
 
-const initialState = {
+interface AppData {
+  notifications?: {
+    email?: Record<string, unknown>;
+    telegram?: Record<string, unknown>;
+  };
+  shortcuts?: Array<Record<string, unknown>>;
+  users?: Record<string, unknown>;
+  settings?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const initialState: AppData = {
     user: null,
     users: [],
     storageConfig: [],
@@ -51,12 +62,12 @@ const initialState = {
  *
  * withData() ensures read-modify-write is atomic.
  */
-let _dataLock = Promise.resolve();
+let _dataLock: Promise<void> = Promise.resolve();
 
 /**
  * Execute a read-modify-write operation atomically.
  * The callback receives current data and must return the modified data.
- * 
+ *
  * Usage:
  *   await withData(data => {
  *       data.users.push(newUser);
@@ -65,21 +76,29 @@ let _dataLock = Promise.resolve();
  *
  * For read-only access, use getData() directly (no lock needed).
  */
-function withData(fn) {
-    let release;
-    const next = new Promise(resolve => { release = resolve; });
+async function withData<T = void>(fn: (data: AppData) => Promise<T> | T): Promise<T> {
+    // Promise-chain queue mutex: each call appends itself to the tail of
+    // _dataLock. A caller only runs after the previous tail resolves, and the
+    // lock is only released (via release()) inside the finally block — which
+    // executes AFTER `await fn(data)` completes (or throws). This guarantees
+    // serialisation even when fn is async: the next queued caller can never
+    // start until the current fn has fully resolved or rejected.
+    let release: () => void;
+    const next = new Promise<void>(resolve => { release = resolve; });
     const prev = _dataLock;
     _dataLock = next;
 
     return prev.then(async () => {
         try {
             const data = getData();
+            // await ensures async fn is fully complete before finally runs.
             const result = await fn(data);
             if (result !== undefined) {
-                saveData(result);
+                saveData(result as AppData);
             }
             return result;
         } finally {
+            // release() unblocks the next queued caller only after fn is done.
             release();
         }
     });
@@ -88,7 +107,7 @@ function withData(fn) {
 /**
  * Ensure config directory exists with secure permissions
  */
-function ensureConfigDir() {
+function ensureConfigDir(): void {
     const configDir = path.dirname(DATA_FILE);
     if (!fs.existsSync(configDir)) {
         fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
@@ -98,7 +117,7 @@ function ensureConfigDir() {
 /**
  * Read data from JSON file
  */
-function getData() {
+function getData(): AppData {
     try {
         ensureConfigDir();
         if (!fs.existsSync(DATA_FILE)) {
@@ -106,8 +125,9 @@ function getData() {
         }
         const content = fs.readFileSync(DATA_FILE, 'utf8');
         return JSON.parse(content);
-    } catch (e) {
-        log.error('Error reading data file:', e.message);
+    } catch (e: unknown) {
+        const error = e as Error;
+        log.error('Error reading data file:', error.message);
         fs.writeFileSync(DATA_FILE, JSON.stringify(initialState, null, 2));
         return initialState;
     }
@@ -117,14 +137,15 @@ function getData() {
  * Save data to JSON file with atomic write (write-to-temp + rename)
  * This prevents data corruption if the process crashes mid-write.
  */
-function saveData(data) {
+function saveData(data: AppData): void {
     try {
         ensureConfigDir();
         const tmpFile = DATA_FILE + '.tmp.' + process.pid;
         fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), { mode: 0o600 });
         fs.renameSync(tmpFile, DATA_FILE);
-    } catch (e) {
-        log.error('Error saving data file:', e.message);
+    } catch (e: unknown) {
+        const error = e as Error;
+        log.error('Error saving data file:', error.message);
         // Clean up temp file on failure
         try { fs.unlinkSync(DATA_FILE + '.tmp.' + process.pid); } catch {}
         throw new Error('Failed to save configuration');
