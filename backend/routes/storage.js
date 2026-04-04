@@ -414,4 +414,147 @@ router.post('/disks/remove-from-pool', requireAuth, requirePermission('admin'), 
     }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BADBLOCKS START  POST /badblocks/:diskId
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/badblocks/:diskId', requireAuth, requirePermission('admin'), async (req, res) => {
+    try {
+        const diskId = sanitizeDiskId(req.params.diskId);
+        if (!diskId) {
+            return res.status(400).json({ error: 'Invalid disk ID' });
+        }
+
+        const existing = badblocksJobs.get(diskId);
+        if (existing && existing.running) {
+            return res.status(409).json({ error: 'Badblocks test already running for this disk' });
+        }
+
+        badblocksJobs.set(diskId, {
+            running:        true,
+            progress:       0,
+            badBlocksFound: 0,
+            result:         null,
+            startTime:      Date.now()
+        });
+
+        const estimatedHours = 2;
+
+        (async () => {
+            try {
+                const { spawn } = require('child_process');
+                const proc = spawn('badblocks', ['-sv', `/dev/${diskId}`], {
+                    stdio: ['ignore', 'pipe', 'pipe']
+                });
+
+                let badCount = 0;
+                proc.stdout.on('data', (chunk) => {
+                    const text = chunk.toString();
+                    const badMatch = text.match(/(\d+) bad block/i);
+                    if (badMatch) badCount = parseInt(badMatch[1], 10);
+                    const pctMatch = text.match(/(\d+\.\d+)%/);
+                    const job = badblocksJobs.get(diskId);
+                    if (job && pctMatch) job.progress = parseFloat(pctMatch[1]);
+                });
+
+                proc.stderr.on('data', (chunk) => {
+                    const text = chunk.toString();
+                    const pctMatch = text.match(/(\d+\.\d+)%/);
+                    const job = badblocksJobs.get(diskId);
+                    if (job && pctMatch) job.progress = parseFloat(pctMatch[1]);
+                });
+
+                proc.on('close', async (code) => {
+                    const job = badblocksJobs.get(diskId);
+                    if (job) {
+                        job.running        = false;
+                        job.progress       = 100;
+                        job.badBlocksFound = badCount;
+                        job.result         = code === 0 ? 'passed' : 'failed';
+                    }
+                    const durationMs = Date.now() - (job ? job.startTime : Date.now());
+                    const resultStr  = code === 0 ? 'passed' : 'failed';
+                    try {
+                        const { notifyBadblocksComplete } = require('../health-monitor');
+                        await notifyBadblocksComplete(diskId, resultStr, badCount, durationMs);
+                    } catch {}
+                    log.info(`[storage] badblocks ${diskId} finished: ${resultStr}, bad blocks: ${badCount}`);
+                });
+
+                const job = badblocksJobs.get(diskId);
+                if (job) job.pid = proc.pid;
+
+            } catch (err) {
+                const job = badblocksJobs.get(diskId);
+                if (job) { job.running = false; job.result = 'failed'; }
+                log.error(`[storage] badblocks ${diskId} spawn error:`, err.message);
+            }
+        })();
+
+        return res.json({ success: true, estimatedHours });
+    } catch (err) {
+        log.error('[storage] badblocks start error:', err.message);
+        return res.status(500).json({ error: 'Failed to start badblocks test' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BADBLOCKS STATUS  GET /badblocks/:diskId/status
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/badblocks/:diskId/status', requireAuth, (req, res) => {
+    const diskId = sanitizeDiskId(req.params.diskId);
+    if (!diskId) {
+        return res.status(400).json({ error: 'Invalid disk ID' });
+    }
+
+    const job = badblocksJobs.get(diskId);
+    if (!job) {
+        return res.json({ running: false, progress: 0, badBlocksFound: 0, result: null });
+    }
+
+    return res.json({
+        running:        job.running,
+        progress:       job.progress,
+        badBlocksFound: job.badBlocksFound,
+        result:         job.result
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BADBLOCKS CANCEL  DELETE /badblocks/:diskId
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.delete('/badblocks/:diskId', requireAuth, requirePermission('admin'), async (req, res) => {
+    try {
+        const diskId = sanitizeDiskId(req.params.diskId);
+        if (!diskId) {
+            return res.status(400).json({ error: 'Invalid disk ID' });
+        }
+
+        const job = badblocksJobs.get(diskId);
+        if (!job || !job.running) {
+            return res.status(404).json({ error: 'No running badblocks test for this disk' });
+        }
+
+        if (job.pid) {
+            try { process.kill(job.pid, 'SIGTERM'); } catch {}
+        }
+
+        job.running = false;
+        job.result  = 'cancelled';
+
+        const durationMs = Date.now() - job.startTime;
+        try {
+            const { notifyBadblocksComplete } = require('../health-monitor');
+            await notifyBadblocksComplete(diskId, 'cancelled', job.badBlocksFound || 0, durationMs);
+        } catch {}
+
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[storage] badblocks cancel error:', err.message);
+        return res.status(500).json({ error: 'Failed to cancel badblocks test' });
+    }
+});
+
 module.exports = router;
