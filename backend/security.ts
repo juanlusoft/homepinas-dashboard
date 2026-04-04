@@ -5,23 +5,32 @@
  * Security logging and safe command execution
  */
 
+import type { ExecFileOptions } from 'child_process';
+
 const log = require('./logger');
 const { execFile } = require('child_process');
 const util = require('util');
 const execFileAsync = util.promisify(execFile);
+const fs = require('fs').promises;
+const path = require('path');
+
+interface ExecResult {
+    stdout: string;
+    stderr: string;
+}
 
 /**
  * Security event logging
  */
-function logSecurityEvent(event, user, ipOrMeta) {
+function logSecurityEvent(event: string, user: Record<string, unknown>, ipOrMeta?: string | Record<string, unknown>): void {
     const timestamp = new Date().toISOString();
     let ip = '-';
-    let meta = null;
+    let meta: Record<string, unknown> | null = null;
     if (typeof ipOrMeta === 'string') {
         ip = ipOrMeta;
     } else if (ipOrMeta && typeof ipOrMeta === 'object') {
-        ip = ipOrMeta.ip || '-';
-        meta = { ...ipOrMeta };
+        ip = (ipOrMeta as Record<string, unknown>).ip || '-';
+        meta = { ...ipOrMeta as Record<string, unknown> };
         delete meta.ip;
     }
     const metaStr = meta && Object.keys(meta).length > 0 ? ` | ${JSON.stringify(meta)}` : '';
@@ -31,7 +40,7 @@ function logSecurityEvent(event, user, ipOrMeta) {
 /**
  * Execute command with sanitized arguments using execFile (safer than exec)
  */
-async function safeExec(command, args = [], options = {}) {
+async function safeExec(command: string, args: string[] = [], options: ExecFileOptions = {}): Promise<ExecResult> {
     // SECURITY: Only specific commands allowed. NO sudo/dd/bash (audit 2026-02-08)
     // Use safeRemove() for file deletion, Node fs for scripts
     // sudo must be invoked directly by routes that need it, with specific sub-commands
@@ -53,6 +62,15 @@ async function safeExec(command, args = [], options = {}) {
         throw new Error(`Command not allowed: ${baseCommand}`);
     }
 
+    // If command is an absolute path, ensure it's in a safe system directory
+    if (command.includes('/')) {
+        const safeDirs = ['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/', '/usr/local/bin/', '/usr/local/sbin/'];
+        const inSafeDir = safeDirs.some(dir => command.startsWith(dir));
+        if (!inSafeDir) {
+            throw new Error(`Command path not in safe directory: ${command}`);
+        }
+    }
+
     // Apply security options AFTER user options to prevent override
     const userOpts = { ...options };
     delete userOpts.timeout;
@@ -69,7 +87,7 @@ async function safeExec(command, args = [], options = {}) {
  * Execute command with sudo - only specific subcommands allowed
  * Use this for system administration tasks that require root
  */
-async function sudoExec(subCommand, args = [], options = {}) {
+async function sudoExec(subCommand: string, args: string[] = [], options: ExecFileOptions = {}): Promise<ExecResult> {
     // SECURITY: Only these commands can be run with sudo
     const allowedSudoCommands = [
         'cp', 'mv', 'chown', 'chmod', 'mkdir', 'tee', 'cat',
@@ -84,13 +102,22 @@ async function sudoExec(subCommand, args = [], options = {}) {
         throw new Error(`Sudo command not allowed: ${baseCommand}`);
     }
 
+    // If command is an absolute path, ensure it's in a safe system directory
+    if (subCommand.includes('/')) {
+        const safeDirs = ['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/', '/usr/local/bin/', '/usr/local/sbin/'];
+        const inSafeDir = safeDirs.some(dir => subCommand.startsWith(dir));
+        if (!inSafeDir) {
+            throw new Error(`Command path not in safe directory: ${subCommand}`);
+        }
+    }
+
     // Validate args don't contain shell metacharacters
     for (const arg of args) {
         if (typeof arg !== 'string') {
             throw new Error('Invalid argument type');
         }
         // Block obvious shell injection attempts
-        if (/[;&|`$()]/.test(arg) && !arg.startsWith('/')) {
+        if (/[;&|`$()]/.test(arg)) {
             throw new Error('Invalid characters in argument');
         }
     }
@@ -109,10 +136,7 @@ async function sudoExec(subCommand, args = [], options = {}) {
 /**
  * Safe file/directory removal with path traversal protection
  */
-const fs = require('fs').promises;
-const path = require('path');
-
-async function safeRemove(targetPath, basePath) {
+async function safeRemove(targetPath: string, basePath: string): Promise<void> {
     if (!basePath) throw new Error('basePath is required for safe removal');
 
     const resolvedBase = path.posix.normalize(String(basePath).replace(/\\/g, '/'));

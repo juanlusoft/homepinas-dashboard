@@ -3,13 +3,15 @@
  * v1.5.6 - Modular Architecture
  */
 
+import type { RateLimitRequestHandler } from 'express-rate-limit';
+
 const rateLimit = require('express-rate-limit');
 
 /**
  * General rate limiter - relaxed for local network NAS dashboard
  * SECURITY: Only skip specific high-frequency polling endpoints, not all GETs
  */
-const generalLimiter = rateLimit({
+const generalLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 500, // High but not unlimited for local network
     message: { error: 'Too many requests, please try again later' },
@@ -29,16 +31,28 @@ const generalLimiter = rateLimit({
 /**
  * Auth rate limiter - stricter for login attempts
  */
-const authLimiter = rateLimit({
+const authLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10,
     message: { error: 'Too many login attempts, please try again later' }
 });
 
 /**
+ * Password change/reset rate limiter
+ * Stricter than auth limiter to prevent brute-force on password operations
+ */
+const passwordLimiter: RateLimitRequestHandler = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    message: { error: 'Too many password change attempts, please try again in an hour' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+/**
  * Critical actions rate limiter
  */
-const criticalLimiter = rateLimit({
+const criticalLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 10,
     message: { error: 'Too many critical actions, please try again later' }
@@ -47,7 +61,7 @@ const criticalLimiter = rateLimit({
 /**
  * Notification rate limiter - prevent spam via email/telegram
  */
-const notificationLimiter = rateLimit({
+const notificationLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20,
     message: { error: 'Too many notification requests, please try again later' }
@@ -56,7 +70,7 @@ const notificationLimiter = rateLimit({
 /**
  * DDNS update rate limiter - prevent excessive API calls to providers
  */
-const ddnsLimiter = rateLimit({
+const ddnsLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 10,
     message: { error: 'Too many DDNS update requests, please try again later' }
@@ -65,7 +79,7 @@ const ddnsLimiter = rateLimit({
 /**
  * VPN management rate limiter - prevent abuse of VPN client creation/install
  */
-const vpnLimiter = rateLimit({
+const vpnLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20,
     message: { error: 'Too many VPN requests, please try again later' }
@@ -75,7 +89,7 @@ const vpnLimiter = rateLimit({
  * Agent registration rate limiter — CRIT-02 fix
  * Prevents flooding the pending agents list
  */
-const agentRegisterLimiter = rateLimit({
+const agentRegisterLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 5,
     message: { error: 'Too many agent registration attempts, try again later' },
@@ -88,7 +102,7 @@ const agentRegisterLimiter = rateLimit({
  * Agent poll/report rate limiter — CRIT-02 fix
  * Normal agents poll every 30-60s; this allows ~1/s burst
  */
-const agentPollLimiter = rateLimit({
+const agentPollLimiter: RateLimitRequestHandler = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 60,
     message: { error: 'Too many agent requests, slow down' },
@@ -100,6 +114,7 @@ const agentPollLimiter = rateLimit({
 module.exports = {
     generalLimiter,
     authLimiter,
+    passwordLimiter,
     criticalLimiter,
     notificationLimiter,
     ddnsLimiter,
