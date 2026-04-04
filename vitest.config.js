@@ -9,6 +9,8 @@ export default defineConfig({
         // Register tsx as a CJS require hook so require('./module') resolves .ts files
         execArgv: ['--require', 'tsx/cjs'],
       }
-    }
+    },
+    // Bridge vi.mock() to CJS require() for route handler tests
+    setupFiles: ['./backend/tests/setup-cjs-mocks.js'],
   }
 });
