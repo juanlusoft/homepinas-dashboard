@@ -264,49 +264,50 @@ chmod 0440 "$SUDOERS_FILE"
 visudo -c -f "$SUDOERS_FILE" >/dev/null 2>&1 && ok "Sudoers configured" || warn "Sudoers syntax error — check ${SUDOERS_FILE}"
 
 # ---------------------------------------------------------------------------
-# 9. Clone / update repository
+# 9. Download repository
 # ---------------------------------------------------------------------------
 STAGING_DIR="${INSTALL_DIR}.staging"
 
-if [[ -d "${INSTALL_DIR}/.git" ]]; then
-    info "Updating existing installation in ${INSTALL_DIR}..."
-    cd "$INSTALL_DIR"
-    git fetch origin "$BRANCH" --quiet
-    git reset --hard "origin/${BRANCH}" --quiet
-    ok "Updated to latest ($(git log -1 --format='%h %s'))"
-else
-    info "Downloading repository to ${INSTALL_DIR}..."
-    ZIP_URL="https://github.com/juanlusoft/homepinas-dashboard/archive/refs/heads/${BRANCH}.zip"
-    ZIP_FILE="/tmp/homepinas-download.zip"
-    DOWNLOAD_OK=0
-    for attempt in 1 2 3; do
-        if curl -fsSL --retry 3 --retry-delay 5 "$ZIP_URL" -o "$ZIP_FILE"; then
-            DOWNLOAD_OK=1
-            break
-        fi
-        warn "Download attempt $attempt failed — retrying in 5s..."
-        sleep 5
-    done
-    [[ $DOWNLOAD_OK -eq 1 ]] || error "Failed to download repository after 3 attempts"
+info "Downloading repository..."
+ZIP_URL="https://github.com/juanlusoft/homepinas-dashboard/archive/refs/heads/${BRANCH}.zip"
+ZIP_FILE="/tmp/homepinas-download.zip"
+EXTRACT_DIR="/tmp/homepinas-extract"
 
-    info "Extracting..."
-    unzip -q "$ZIP_FILE" -d /tmp/homepinas-extract
-    rm -f "$ZIP_FILE"
-    mv /tmp/homepinas-extract/homepinas-dashboard-${BRANCH} "$STAGING_DIR"
-    rm -rf /tmp/homepinas-extract
+# Clean up any leftovers from a previous failed attempt
+rm -rf "$EXTRACT_DIR" "$STAGING_DIR"
 
-    # Preserve config and data from previous install if upgrading
-    if [[ -d "${INSTALL_DIR}/config" ]]; then
-        info "Preserving existing config..."
-        cp -a "${INSTALL_DIR}/config" "${STAGING_DIR}/config" 2>/dev/null || true
+DOWNLOAD_OK=0
+for attempt in 1 2 3; do
+    if curl -fsSL --retry 3 --retry-delay 5 "$ZIP_URL" -o "$ZIP_FILE"; then
+        DOWNLOAD_OK=1
+        break
     fi
-    if [[ -d "$INSTALL_DIR" ]]; then
-        mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%s)"
-        info "Previous install backed up"
-    fi
-    mv "$STAGING_DIR" "$INSTALL_DIR"
-    ok "Repository cloned to ${INSTALL_DIR}"
+    warn "Download attempt $attempt failed — retrying in 5s..."
+    sleep 5
+done
+[[ $DOWNLOAD_OK -eq 1 ]] || error "Failed to download repository after 3 attempts"
+
+info "Extracting..."
+unzip -q "$ZIP_FILE" -d "$EXTRACT_DIR"
+rm -f "$ZIP_FILE"
+
+# GitHub names the extracted folder {repo}-{branch}, e.g. homepinas-dashboard-main
+EXTRACTED_FOLDER=$(find "$EXTRACT_DIR" -maxdepth 1 -mindepth 1 -type d | head -1)
+[[ -n "$EXTRACTED_FOLDER" ]] || error "Extraction failed — no directory found in ZIP"
+mv "$EXTRACTED_FOLDER" "$STAGING_DIR"
+rm -rf "$EXTRACT_DIR"
+
+# Preserve config and data from previous install if upgrading
+if [[ -d "${INSTALL_DIR}/config" ]]; then
+    info "Preserving existing config..."
+    cp -a "${INSTALL_DIR}/config" "${STAGING_DIR}/config" 2>/dev/null || true
 fi
+if [[ -d "$INSTALL_DIR" ]]; then
+    mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%s)"
+    info "Previous install backed up"
+fi
+mv "$STAGING_DIR" "$INSTALL_DIR"
+ok "Repository downloaded to ${INSTALL_DIR}"
 
 cd "$INSTALL_DIR"
 
