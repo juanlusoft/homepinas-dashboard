@@ -173,7 +173,7 @@ for pkg in \
     wireguard wireguard-tools \
     qrencode \
     fuse3; do
-    install_pkg "$pkg"
+    install_pkg "$pkg" || true
 done
 
 # snapraid — in Debian repos since Bullseye
