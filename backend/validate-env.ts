@@ -6,8 +6,13 @@
 
 const log = require('./logger');
 
-/** @type {{ name: string, required: boolean, default?: string }[]} */
-const ENV_VARS = [
+interface EnvVar {
+    name: string;
+    required: boolean;
+    default?: string;
+}
+
+const ENV_VARS: EnvVar[] = [
     { name: 'PORT', required: false, default: '443' },
     { name: 'LOG_LEVEL', required: false, default: 'info' },
     { name: 'NODE_ENV', required: false, default: 'production' },
@@ -18,7 +23,7 @@ const ENV_VARS = [
 /**
  * Validate environment variables. Exits process if required vars are missing.
  */
-function validateEnv() {
+function validateEnv(): void {
     let hasErrors = false;
 
     for (const v of ENV_VARS) {

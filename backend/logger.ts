@@ -14,6 +14,13 @@
  *   log.debug('Request body:', body);
  */
 
+interface Logger {
+    debug(...args: unknown[]): void;
+    info(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    error(...args: unknown[]): void;
+}
+
 const LEVELS = { debug: 0, info: 1, warn: 2, error: 3 };
 const currentLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS.info;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -21,7 +28,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 /**
  * Format a structured JSON log line (production).
  */
-function formatJson(level, args) {
+function formatJson(level: string, args: unknown[]): string {
     const entry = {
         time: new Date().toISOString(),
         level,
@@ -33,12 +40,12 @@ function formatJson(level, args) {
 /**
  * Format a human-readable log line (dev).
  */
-function formatHuman(tag, args) {
+function formatHuman(tag: string, args: unknown[]): (string | unknown)[] {
     const ts = new Date().toISOString();
     return [`[${ts}] [${tag}]`, ...args];
 }
 
-const log = {
+const log: Logger = {
     debug(...args) {
         if (currentLevel <= LEVELS.debug) {
             if (isProduction) {
