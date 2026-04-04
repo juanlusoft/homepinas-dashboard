@@ -143,6 +143,9 @@ function registerRoutes(app: Express, version: string): void {
 
     // VPN Server (WireGuard)
     app.use('/api/vpn', vpnRoutes);
+
+    const { initScheduler } = require('./routes/scheduler');
+    initScheduler();
 }
 
 module.exports = { registerRoutes };

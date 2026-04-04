@@ -48,6 +48,11 @@ const ROUTE_FILES = [
     path.resolve(SETUP_DIR, '../routes/power.js'),
     path.resolve(SETUP_DIR, '../routes/update.js'),
     path.resolve(SETUP_DIR, '../routes/network.js'),
+    path.resolve(SETUP_DIR, '../routes/samba.js'),
+    path.resolve(SETUP_DIR, '../routes/nfs.js'),
+    path.resolve(SETUP_DIR, '../routes/vpn.js'),
+    path.resolve(SETUP_DIR, '../routes/notifications.js'),
+    path.resolve(SETUP_DIR, '../routes/scheduler.js'),
 ];
 
 /**
@@ -108,11 +113,13 @@ const ALL_MOCK_CANDIDATES = [
     '../rbac',
     '../security',
     '../logger',
+    '../notify',
     'bcryptjs',
     'otplib',
     'qrcode',
     'os',
     'fs',
+    'node-cron',
 ];
 
 beforeEach(async () => {
