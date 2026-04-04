@@ -79,6 +79,7 @@ function registerRoutes(app: Express, version: string): void {
 
     // Storage routes (pool, snapraid)
     app.use('/api/storage', storageRoutes);
+    app.use('/api/cache',   storageRoutes);   // alias: POST /api/cache/move-now
 
     // Docker routes
     app.use('/api/docker', dockerRoutes);
