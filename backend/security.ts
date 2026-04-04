@@ -53,7 +53,8 @@ async function safeExec(command: string, args: string[] = [], options: ExecFileO
         'apcaccess', 'apctest', 'upsc', 'upscmd', 'rsync', 'tar',
         'crontab', 'mv', 'grep', 'blkid', 'lsblk', 'findmnt',
         'mkswap', 'swapon', 'swapoff', 'fdisk', 'xorriso', 'mksquashfs',
-        'wg', 'qrencode', 'which', 'ip'
+        'wg', 'qrencode', 'which', 'ip',
+        'docker', 'git', 'find', 'badblocks', 'npm'
     ];
 
     // Require absolute path or resolve from PATH - no path traversal tricks
@@ -94,7 +95,8 @@ async function sudoExec(subCommand: string, args: string[] = [], options: ExecFi
         'systemctl', 'smbpasswd', 'useradd', 'usermod', 'userdel',
         'mount', 'umount', 'mkfs.ext4', 'mkfs.xfs', 'parted', 'partprobe',
         'samba-tool', 'net', 'testparm',
-        'apt-get', 'dpkg', 'fuser', 'killall', 'rm', 'sysctl', 'wg'
+        'apt-get', 'dpkg', 'fuser', 'killall', 'rm', 'sysctl', 'wg',
+        'exportfs', 'ip'
     ];
 
     const baseCommand = path.basename(subCommand);
@@ -134,6 +136,31 @@ async function sudoExec(subCommand: string, args: string[] = [], options: ExecFi
 }
 
 /**
+ * Spawn an allowed command, returning a ChildProcess for streaming output.
+ * Performs the same allowlist check as safeExec.
+ */
+function safeSpawn(command: string, args: string[] = [], options: object = {}): import('child_process').ChildProcess {
+    const { spawn } = require('child_process');
+    const baseCommand = path.basename(command);
+    const allowedCommands = [
+        'cat', 'ls', 'df', 'mount', 'umount', 'smartctl',
+        'systemctl', 'snapraid', 'mergerfs', 'smbpasswd', 'useradd',
+        'usermod', 'chown', 'chmod', 'mkfs.ext4', 'mkfs.xfs', 'parted',
+        'partprobe', 'id', 'getent', 'cp', 'tee', 'mkdir',
+        'journalctl', 'smbstatus', 'smbd', 'nmbd', 'userdel',
+        'apcaccess', 'apctest', 'upsc', 'upscmd', 'rsync', 'tar',
+        'crontab', 'mv', 'grep', 'blkid', 'lsblk', 'findmnt',
+        'mkswap', 'swapon', 'swapoff', 'fdisk', 'xorriso', 'mksquashfs',
+        'wg', 'qrencode', 'which', 'ip',
+        'docker', 'git', 'find', 'badblocks', 'npm'
+    ];
+    if (!allowedCommands.includes(baseCommand)) {
+        throw new Error(`safeSpawn: command not allowed: ${baseCommand}`);
+    }
+    return spawn(command, args, { ...options });
+}
+
+/**
  * Safe file/directory removal with path traversal protection
  */
 async function safeRemove(targetPath: string, basePath: string): Promise<void> {
@@ -167,5 +194,6 @@ module.exports = {
     logSecurityEvent,
     safeExec,
     sudoExec,
-    safeRemove
+    safeRemove,
+    safeSpawn
 };

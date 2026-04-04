@@ -99,4 +99,54 @@ describe('Security', () => {
       expect(true).toBe(true);
     });
   });
+
+  describe('safeExec() allowlist coverage for Phase 4 routes', () => {
+    it('allows find (required by files/search)', async () => {
+      let errorMessage = null;
+      try {
+        await safeExec('find', ['--version']);
+      } catch (err) {
+        errorMessage = err.message;
+      }
+      if (errorMessage) {
+        expect(errorMessage).not.toMatch(/Command not allowed/);
+      }
+    });
+
+    it('allows journalctl (required by logs route)', async () => {
+      let errorMessage = null;
+      try {
+        await safeExec('journalctl', ['--version']);
+      } catch (err) {
+        errorMessage = err.message;
+      }
+      if (errorMessage) {
+        expect(errorMessage).not.toMatch(/Command not allowed/);
+      }
+    });
+
+    it('allows apcaccess (required by ups route)', async () => {
+      let errorMessage = null;
+      try {
+        await safeExec('apcaccess', ['--help']);
+      } catch (err) {
+        errorMessage = err.message;
+      }
+      if (errorMessage) {
+        expect(errorMessage).not.toMatch(/Command not allowed/);
+      }
+    });
+
+    it('allows which (used by ups route to check apcaccess)', async () => {
+      let errorMessage = null;
+      try {
+        await safeExec('which', ['ls']);
+      } catch (err) {
+        errorMessage = err.message;
+      }
+      if (errorMessage) {
+        expect(errorMessage).not.toMatch(/Command not allowed/);
+      }
+    });
+  });
 });

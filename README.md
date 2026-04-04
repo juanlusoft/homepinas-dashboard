@@ -7,15 +7,25 @@ Premium NAS management dashboard for Raspberry Pi CM5 and similar ARM single-boa
 | Module | Description |
 |--------|-------------|
 | **Dashboard** | System overview — CPU, RAM, temps, uptime, network |
-| **Storage** | ZFS/mergerfs pools, disk health (SMART), SnapRAID |
-| **Docker** | Container management + compose editor |
-| **Files** | File browser with upload/download/preview |
-| **Network** | Interface stats, public IP, WireGuard VPN |
-| **Backup** | Local, Active Backup (Synology-style), cloud sync |
-| **Logs** | Live system log viewer |
+| **Storage** | mergerfs pools, disk health (SMART), SnapRAID sync, badblocks |
+| **Docker** | Container management, compose editor, update checker |
+| **Homestore** | One-click self-hosted app catalog (15 apps via Docker Compose) |
+| **Stacks** | Compose stack listing + status |
+| **Files** | File browser with upload/download/rename/move/copy/search |
+| **Backup** | Async rsync jobs with status polling |
+| **Samba** | SMB/CIFS share management — create/edit/delete shares, restart |
+| **NFS** | NFS export management — create/edit/delete exports, restart |
+| **VPN** | WireGuard VPN — install, manage clients, QR codes |
+| **DDNS** | Dynamic DNS (DuckDNS, Cloudflare, No-IP) with background polling |
+| **Notifications** | Email (SMTP) + Telegram alerts with test delivery |
+| **Scheduler** | Cron-based task scheduler (snapraid-sync, backup, custom) |
+| **Network** | Interface stats, public IP |
+| **Logs** | Live journalctl log viewer with service filter |
 | **Users** | Multi-user RBAC with 2FA (TOTP) |
 | **Terminal** | Browser-based PTY terminal over WebSocket |
-| **Shortcuts** | Bookmarks to local services |
+| **Shortcuts** | Custom terminal command shortcuts with defaults |
+| **UPS** | APC UPS status monitoring (apcupsd) |
+| **Updates** | Dashboard self-update (git pull) + OS apt upgrades |
 
 ## Stack
 

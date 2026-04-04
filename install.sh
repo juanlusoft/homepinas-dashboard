@@ -168,8 +168,10 @@ for pkg in \
     e2fsprogs xfsprogs \
     util-linux \
     rsync \
-    nfs-common \
+    nfs-common nfs-kernel-server \
     samba samba-common-bin \
+    wireguard wireguard-tools \
+    qrencode \
     fuse3; do
     install_pkg "$pkg"
 done
@@ -253,6 +255,11 @@ ${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/apcaccess
 ${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/mkswap
 ${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/swapon
 ${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/swapoff
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/sbin/exportfs
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/tee
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/sbin/testparm
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/wg
 SUDOERS
 chmod 0440 "$SUDOERS_FILE"
 visudo -c -f "$SUDOERS_FILE" >/dev/null 2>&1 && ok "Sudoers configured" || warn "Sudoers syntax error — check ${SUDOERS_FILE}"
@@ -530,11 +537,5 @@ echo ""
 echo -e "  ${YLW}⚠  Browser will show a security warning for the self-signed cert.${NC}"
 echo -e "     Click 'Advanced → Proceed' or install the cert in your trust store."
 echo ""
-if [[ ! -d "${INSTALL_DIR}/backend/routes" ]]; then
-    echo -e "  ${RED}⚠  backend/routes/ is not present in this installation.${NC}"
-    echo     "     API endpoints (/api/*) require route modules in that directory."
-    echo     "     The server will start but most features will not be functional."
-    echo ""
-fi
 echo -e "  ${CYN}Re-login or run 'newgrp docker' to use Docker without sudo.${NC}"
 echo ""
