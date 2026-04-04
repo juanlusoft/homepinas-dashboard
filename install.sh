@@ -3,7 +3,8 @@
 # HomePiNAS Dashboard v3.5 — Installer
 # Installs the dashboard on Raspberry Pi OS / Debian Bookworm / Ubuntu 22.04+
 #
-# Usage: sudo bash install.sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/juanlusoft/homepinas-dashboard/main/install.sh | sudo bash
+#        sudo bash install.sh
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -35,10 +36,10 @@ install_pkg() {
         return 0
     fi
     info "Installing $pkg..."
-    if apt-get install -y "$pkg" >/dev/null 2>&1; then
+    if apt-get install -y -q "$pkg" >/dev/null 2>&1; then
         ok "$pkg installed"
     else
-        warn "$pkg could not be installed — install manually if needed"
+        warn "$pkg could not be installed — skipping (install manually if needed)"
         return 1
     fi
 }
@@ -49,7 +50,7 @@ install_pkg() {
 echo -e "${GRN}"
 echo "  ╔══════════════════════════════════════════════════╗"
 echo "  ║   HomePiNAS Dashboard v${APP_VERSION}                   ║"
-echo "  ║   NAS Management Dashboard — Raspberry Pi CM5   ║"
+echo "  ║   NAS Management Dashboard — Raspberry Pi       ║"
 echo "  ╚══════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -60,8 +61,10 @@ echo -e "${NC}"
 
 # Detect real user (the one who invoked sudo)
 REAL_USER="${SUDO_USER:-$USER}"
-REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
-info "Installing as user: ${REAL_USER}"
+if [[ "$REAL_USER" == "root" ]]; then
+    warn "Running directly as root — service will run as root"
+fi
+info "Installing for user: ${REAL_USER}"
 
 # ---------------------------------------------------------------------------
 # 2. Architecture & distro detection
@@ -78,7 +81,7 @@ DISTRO_PRETTY=$(. /etc/os-release 2>/dev/null && echo "${PRETTY_NAME:-Linux}")
 info "Arch: ${SYS_ARCH}  |  Distro: ${DISTRO_PRETTY}"
 
 # ---------------------------------------------------------------------------
-# 3. System update
+# 3. Package lists update
 # ---------------------------------------------------------------------------
 info "Updating package lists..."
 apt-get update -qq
@@ -88,7 +91,7 @@ ok "Package lists updated"
 # 4. Core build tools
 # ---------------------------------------------------------------------------
 info "Installing build essentials..."
-for pkg in build-essential python3 git curl openssl ca-certificates gnupg unzip; do
+for pkg in build-essential python3 git curl openssl ca-certificates gnupg; do
     install_pkg "$pkg"
 done
 
@@ -96,16 +99,10 @@ done
 # 5. Node.js >= 20 (installs LTS 22 if missing or too old)
 # ---------------------------------------------------------------------------
 install_node() {
-    info "Installing Node.js v22 LTS..."
-    if command -v apt-get &>/dev/null; then
-        curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
-        apt-get install -y nodejs >/dev/null 2>&1
-    elif command -v dnf &>/dev/null; then
-        curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
-        dnf install -y nodejs >/dev/null 2>&1
-    else
-        error "Unsupported package manager. Install Node.js v22+ manually from https://nodejs.org"
-    fi
+    info "Installing Node.js v22 LTS via NodeSource..."
+    # NodeSource setup script uses its own pipe — stdin is the inner curl, not ours
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
+    apt-get install -y -q nodejs >/dev/null 2>&1
     ok "Node.js $(node --version) installed"
 }
 
@@ -126,6 +123,7 @@ fi
 # ---------------------------------------------------------------------------
 if ! command -v docker &>/dev/null; then
     info "Installing Docker..."
+    # get.docker.com uses its own pipe — stdin is the inner curl, not ours
     curl -fsSL https://get.docker.com | sh >/dev/null 2>&1
     ok "Docker $(docker --version | awk '{print $3}' | tr -d ',') installed"
 else
@@ -141,25 +139,30 @@ fi
 
 if ! docker compose version &>/dev/null 2>&1; then
     info "Installing Docker Compose plugin..."
-    apt-get install -y docker-compose-plugin >/dev/null 2>&1 || {
+    apt-get install -y -q docker-compose-plugin >/dev/null 2>&1 || {
         COMPOSE_VER=$(curl -fsSL https://api.github.com/repos/docker/compose/releases/latest \
             | grep '"tag_name"' | head -1 | cut -d'"' -f4)
-        mkdir -p /usr/local/lib/docker/cli-plugins
-        curl -fsSL \
-            "https://github.com/docker/compose/releases/download/${COMPOSE_VER}/docker-compose-linux-$(uname -m)" \
-            -o /usr/local/lib/docker/cli-plugins/docker-compose
-        chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+        if [[ -z "$COMPOSE_VER" ]]; then
+            warn "Could not determine Docker Compose version — install manually"
+        else
+            mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -fsSL \
+                "https://github.com/docker/compose/releases/download/${COMPOSE_VER}/docker-compose-linux-$(uname -m)" \
+                -o /usr/local/lib/docker/cli-plugins/docker-compose
+            chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+        fi
     }
-    ok "Docker Compose $(docker compose version --short 2>/dev/null) installed"
-else
-    ok "Docker Compose $(docker compose version --short 2>/dev/null) found"
 fi
+# Report compose version without --short (not available in all versions)
+COMPOSE_VER_OUT=$(docker compose version 2>/dev/null | awk '{print $NF}' || echo "unknown")
+ok "Docker Compose ${COMPOSE_VER_OUT} ready"
 
 # ---------------------------------------------------------------------------
 # 7. Storage tools
 # ---------------------------------------------------------------------------
 info "Installing storage tools..."
 
+# All packages here are optional — failure is warned, not fatal
 for pkg in \
     ntfs-3g exfat-fuse exfatprogs \
     smartmontools \
@@ -178,7 +181,7 @@ done
 # snapraid — in Debian repos since Bullseye
 if pkg_installed snapraid; then
     ok "snapraid already installed"
-elif apt-get install -y snapraid >/dev/null 2>&1; then
+elif apt-get install -y -q snapraid >/dev/null 2>&1; then
     ok "snapraid installed"
 else
     warn "snapraid not in repos for ${DEBIAN_CODENAME}/${SYS_ARCH} — install manually: https://www.snapraid.it"
@@ -190,7 +193,7 @@ if pkg_installed mergerfs || command -v mergerfs &>/dev/null; then
 else
     info "Installing mergerfs from GitHub releases..."
     MERGERFS_VER=$(curl -fsSL https://api.github.com/repos/trapexit/mergerfs/releases/latest \
-        | grep '"tag_name"' | head -1 | cut -d'"' -f4)
+        2>/dev/null | grep '"tag_name"' | head -1 | cut -d'"' -f4)
     if [[ -n "$MERGERFS_VER" ]]; then
         CANDIDATES=(
             "mergerfs_${MERGERFS_VER}.debian-${DEBIAN_CODENAME}_${SYS_ARCH}.deb"
@@ -198,25 +201,30 @@ else
             "mergerfs_${MERGERFS_VER}_${SYS_ARCH}.deb"
         )
         BASE_URL="https://github.com/trapexit/mergerfs/releases/download/${MERGERFS_VER}"
-        DOWNLOADED=0
+        MERGERFS_OK=0
         for fname in "${CANDIDATES[@]}"; do
-            if curl -fsSL --head "${BASE_URL}/${fname}" -o /dev/null 2>/dev/null; then
-                curl -fsSL "${BASE_URL}/${fname}" -o /tmp/mergerfs.deb
-                dpkg -i /tmp/mergerfs.deb >/dev/null 2>&1
-                rm -f /tmp/mergerfs.deb
-                ok "mergerfs ${MERGERFS_VER} installed"
-                DOWNLOADED=1
-                break
+            HTTP_CODE=$(curl -fsS --head -o /dev/null -w "%{http_code}" "${BASE_URL}/${fname}" 2>/dev/null || echo "000")
+            if [[ "$HTTP_CODE" == "200" || "$HTTP_CODE" == "302" ]]; then
+                if curl -fsSL "${BASE_URL}/${fname}" -o /tmp/mergerfs.deb 2>/dev/null; then
+                    if dpkg -i /tmp/mergerfs.deb >/dev/null 2>&1; then
+                        ok "mergerfs ${MERGERFS_VER} installed"
+                        MERGERFS_OK=1
+                    else
+                        warn "mergerfs .deb downloaded but dpkg failed — run: apt-get install -f"
+                    fi
+                    rm -f /tmp/mergerfs.deb
+                    break
+                fi
             fi
         done
-        [[ $DOWNLOADED -eq 0 ]] && warn "mergerfs: no .deb for ${DEBIAN_CODENAME}/${SYS_ARCH} — install manually: https://github.com/trapexit/mergerfs/releases"
+        [[ $MERGERFS_OK -eq 0 ]] && warn "mergerfs: no .deb for ${DEBIAN_CODENAME}/${SYS_ARCH} — install manually: https://github.com/trapexit/mergerfs/releases"
     else
         warn "mergerfs: could not fetch latest version from GitHub"
     fi
 fi
 
-# apcupsd or nut (for UPS support — optional)
-install_pkg "apcupsd" 2>/dev/null || true
+# apcupsd — optional UPS support
+install_pkg "apcupsd" || true
 
 ok "Storage tools done"
 
@@ -261,53 +269,45 @@ ${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get
 ${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/wg
 SUDOERS
 chmod 0440 "$SUDOERS_FILE"
-visudo -c -f "$SUDOERS_FILE" >/dev/null 2>&1 && ok "Sudoers configured" || warn "Sudoers syntax error — check ${SUDOERS_FILE}"
+visudo -c -f "$SUDOERS_FILE" >/dev/null 2>&1 \
+    && ok "Sudoers configured" \
+    || warn "Sudoers syntax error — check ${SUDOERS_FILE}"
 
 # ---------------------------------------------------------------------------
-# 9. Download repository
+# 9. Clone / update repository
+# ---------------------------------------------------------------------------
+# NOTE: </dev/null on git clone is required when running via `curl | bash`
+# because the outer pipe occupies stdin. Without it, git tries to negotiate
+# credentials over stdin → GitHub closes the connection immediately.
+# The repo is public so no credentials are needed; /dev/null is safe.
 # ---------------------------------------------------------------------------
 STAGING_DIR="${INSTALL_DIR}.staging"
 
-info "Downloading repository..."
-ZIP_URL="https://github.com/juanlusoft/homepinas-dashboard/archive/refs/heads/${BRANCH}.zip"
-ZIP_FILE="/tmp/homepinas-download.zip"
-EXTRACT_DIR="/tmp/homepinas-extract"
+if [[ -d "${INSTALL_DIR}" && -f "${INSTALL_DIR}/package.json" ]]; then
+    info "Updating existing installation in ${INSTALL_DIR}..."
+    cd "$INSTALL_DIR"
+    git fetch origin "$BRANCH" --quiet </dev/null
+    git reset --hard "origin/${BRANCH}" --quiet
+    ok "Updated to latest ($(git log -1 --format='%h %s'))"
+    cd "$INSTALL_DIR"
+else
+    info "Cloning repository to ${INSTALL_DIR}..."
+    rm -rf "$STAGING_DIR"
+    git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$STAGING_DIR" </dev/null \
+        || error "git clone failed — check your internet connection"
 
-# Clean up any leftovers from a previous failed attempt
-rm -rf "$EXTRACT_DIR" "$STAGING_DIR"
-
-DOWNLOAD_OK=0
-for attempt in 1 2 3; do
-    if curl -fsSL --retry 3 --retry-delay 5 "$ZIP_URL" -o "$ZIP_FILE"; then
-        DOWNLOAD_OK=1
-        break
+    # Preserve config from a previous install
+    if [[ -d "${INSTALL_DIR}/config" ]]; then
+        info "Preserving existing config..."
+        cp -a "${INSTALL_DIR}/config" "${STAGING_DIR}/config" 2>/dev/null || true
     fi
-    warn "Download attempt $attempt failed — retrying in 5s..."
-    sleep 5
-done
-[[ $DOWNLOAD_OK -eq 1 ]] || error "Failed to download repository after 3 attempts"
-
-info "Extracting..."
-unzip -q "$ZIP_FILE" -d "$EXTRACT_DIR"
-rm -f "$ZIP_FILE"
-
-# GitHub names the extracted folder {repo}-{branch}, e.g. homepinas-dashboard-main
-EXTRACTED_FOLDER=$(find "$EXTRACT_DIR" -maxdepth 1 -mindepth 1 -type d | head -1)
-[[ -n "$EXTRACTED_FOLDER" ]] || error "Extraction failed — no directory found in ZIP"
-mv "$EXTRACTED_FOLDER" "$STAGING_DIR"
-rm -rf "$EXTRACT_DIR"
-
-# Preserve config and data from previous install if upgrading
-if [[ -d "${INSTALL_DIR}/config" ]]; then
-    info "Preserving existing config..."
-    cp -a "${INSTALL_DIR}/config" "${STAGING_DIR}/config" 2>/dev/null || true
+    if [[ -d "$INSTALL_DIR" ]]; then
+        mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%s)"
+        info "Previous install backed up"
+    fi
+    mv "$STAGING_DIR" "$INSTALL_DIR"
+    ok "Repository cloned to ${INSTALL_DIR}"
 fi
-if [[ -d "$INSTALL_DIR" ]]; then
-    mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%s)"
-    info "Previous install backed up"
-fi
-mv "$STAGING_DIR" "$INSTALL_DIR"
-ok "Repository downloaded to ${INSTALL_DIR}"
 
 cd "$INSTALL_DIR"
 
@@ -315,7 +315,10 @@ cd "$INSTALL_DIR"
 # 10. npm install (compiles better-sqlite3 and node-pty)
 # ---------------------------------------------------------------------------
 info "Installing Node.js dependencies (may take a few minutes — compiling native modules)..."
-npm install 2>&1 | grep -E "^(added|removed|changed|npm error|npm warn deprecated)" || true
+if ! npm install --loglevel=error 2>/tmp/homepinas-npm.log; then
+    error "npm install failed. Log:\n$(cat /tmp/homepinas-npm.log | tail -20)"
+fi
+rm -f /tmp/homepinas-npm.log
 ok "Dependencies installed"
 
 # ---------------------------------------------------------------------------
@@ -327,7 +330,7 @@ mkdir -p \
     "${INSTALL_DIR}/config" \
     "${INSTALL_DIR}/backend/certs"
 
-# Storage dirs on NAS mount (only if /mnt/storage exists)
+# /mnt/storage only created if the path is already a mount point or doesn't exist
 for dir in /mnt/storage /mnt/storage/.tmp /mnt/storage/.uploads-tmp; do
     if [[ "$dir" == "/mnt/storage" ]] || [[ -d /mnt/storage ]]; then
         mkdir -p "$dir" 2>/dev/null || true
@@ -448,8 +451,8 @@ fi
 # ---------------------------------------------------------------------------
 info "Installing systemd service..."
 
-NODE_BIN=$(command -v node)
 TSX_BIN="${INSTALL_DIR}/node_modules/.bin/tsx"
+[[ -f "$TSX_BIN" ]] || error "tsx not found at ${TSX_BIN} — npm install may have failed"
 
 cat > "/etc/systemd/system/${SERVICE_NAME}.service" << SERVICE
 [Unit]
@@ -491,16 +494,16 @@ systemctl enable "$SERVICE_NAME"
 ok "Service installed and enabled"
 
 # ---------------------------------------------------------------------------
-# 16. Start service
+# 15. Start service
 # ---------------------------------------------------------------------------
 info "Starting HomePiNAS service..."
 systemctl restart "$SERVICE_NAME"
-sleep 4
+sleep 5
 
 if systemctl is-active --quiet "$SERVICE_NAME"; then
     ok "Service started successfully"
 else
-    warn "Service may not have started — check: journalctl -u ${SERVICE_NAME} -f"
+    warn "Service did not start — check logs: journalctl -u ${SERVICE_NAME} -n 30 --no-pager"
 fi
 
 # ---------------------------------------------------------------------------
@@ -520,7 +523,7 @@ echo -e "${GRN}║${NC}     https://${HOSTNAME}.local                      "
 echo -e "${GRN}║${NC}                                                      "
 echo -e "${GRN}║${NC}   ${CYN}Service:${NC}                                          "
 echo -e "${GRN}║${NC}     sudo systemctl status ${SERVICE_NAME}               "
-echo -e "${GRN}║${NC}     sudo journalctl -u ${SERVICE_NAME} -f              "
+echo -e "${GRN}║${NC}     sudo journalctl -u ${SERVICE_NAME} -n 30           "
 echo -e "${GRN}║${NC}                                                      "
 echo -e "${GRN}║${NC}   ${CYN}Files:${NC}                                            "
 echo -e "${GRN}║${NC}     Install:  ${INSTALL_DIR}/                        "
