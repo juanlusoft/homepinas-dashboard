@@ -44,7 +44,7 @@ function _renderInterfaceCard(iface) {
             </label>
             <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
                 <input data-role="ip" type="text" value="${escapeHtml(iface.ip || '')}" placeholder="IP" ${isDhcp ? 'disabled' : ''}>
-                <input data-role="subnet" type="text" value="${escapeHtml(iface.subnet || '255.255.255.0')}" placeholder="Máscara" ${isDhcp ? 'disabled' : ''}>
+                <input data-role="subnet" type="text" value="${escapeHtml(iface.subnet || '255.255.255.0')}" placeholder="Mï¿½scara" ${isDhcp ? 'disabled' : ''}>
                 <input data-role="gateway" type="text" value="${escapeHtml(iface.gateway || '')}" placeholder="Gateway" ${isDhcp ? 'disabled' : ''}>
                 <input data-role="dns" type="text" value="${escapeHtml(iface.dns || '')}" placeholder="DNS" ${isDhcp ? 'disabled' : ''}>
             </div>
@@ -84,7 +84,7 @@ function _renderInterfaceCard(iface) {
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || t('common.error', 'Error'));
-            showNotification(data.message || t('network.configSaved', 'Configuración aplicada'), 'success');
+            showNotification(data.message || t('network.configSaved', 'Configuraciï¿½n aplicada'), 'success');
         } catch (e) {
             showNotification(e.message || t('common.error', 'Error'), 'error');
         } finally {
@@ -129,6 +129,10 @@ export async function renderNetworkManager() {
     } catch (e) {
         dashboardContent.innerHTML = `<div class="glass-card" style="grid-column:1 / -1;"><h3>${t('common.error', 'Error al cargar datos de red')}</h3><p>${escapeHtml(e.message || '')}</p></div>`;
     }
+}
+
+export async function render(container) {
+    await renderNetworkManager();
 }
 
 export function cleanup() {

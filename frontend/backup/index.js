@@ -191,4 +191,8 @@ export function cleanup() {
     _backupListeners = [];
 }
 
+export async function render(container) {
+    await renderBackupView();
+}
+
 export { renderBackupView, renderActiveBackupView };

@@ -8,14 +8,20 @@
 const nodemailer = require('nodemailer');
 const { getData } = require('./data');
 
+interface NotifyResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
 /**
  * Send an email using stored SMTP configuration.
  * @param {string} subject
  * @param {string} text - plain text body
  * @param {string} html - HTML body (optional, falls back to text)
- * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ * @returns {Promise<NotifyResult>}
  */
-async function sendViaEmail(subject, text, html) {
+async function sendViaEmail(subject: string, text: string, html?: string): Promise<NotifyResult> {
     const data = getData();
     const cfg = data.notifications?.email;
 
@@ -41,16 +47,22 @@ async function sendViaEmail(subject, text, html) {
 
         return { success: true, messageId: info.messageId };
     } catch (err) {
-        return { success: false, error: err.message };
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: message };
     }
+}
+
+interface TelegramResponse {
+    ok: boolean;
+    description?: string;
 }
 
 /**
  * Send a Telegram message using stored bot configuration.
  * @param {string} text - Markdown-formatted message (max 4096 chars)
- * @returns {Promise<{success: boolean, error?: string}>}
+ * @returns {Promise<NotifyResult>}
  */
-async function sendViaTelegram(text) {
+async function sendViaTelegram(text: string): Promise<NotifyResult> {
     const data = getData();
     const cfg = data.notifications?.telegram;
 
@@ -70,13 +82,14 @@ async function sendViaTelegram(text) {
             })
         });
 
-        const result = await response.json();
+        const result = await response.json() as TelegramResponse;
         if (!result.ok) {
             return { success: false, error: result.description };
         }
         return { success: true };
     } catch (err) {
-        return { success: false, error: err.message };
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: message };
     }
 }
 

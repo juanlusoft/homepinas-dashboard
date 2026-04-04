@@ -1,0 +1,63 @@
+/* logs/style.css — extracted from style.css */
+/* Lines from source: 2880–2922, 10065–10082 */
+
+/* Logs Modal */
+.logs-modal-content {
+    width: 90%;
+    max-width: 900px;
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.logs-container {
+    flex: 1;
+    background: #0d0d0d;
+    padding: 15px;
+    overflow: auto;
+    font-family: 'Fira Code', 'Monaco', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #e5e5e5;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.logs-container .log-line {
+    padding: 2px 0;
+}
+
+.logs-container .log-timestamp {
+    color: #64748b;
+}
+
+.logs-container .log-error {
+    color: #ef4444;
+}
+
+.logs-container .log-warn {
+    color: #f59e0b;
+}
+
+.logs-container .log-info {
+    color: #3b82f6;
+}
+
+/* Logs Viewer */
+.logview-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.logview-loading {
+    color: var(--text-dim);
+}
+
+.logview-empty {
+    color: var(--text-dim);
+}
+
+.logview-error {
+    color: #ef4444;
+}

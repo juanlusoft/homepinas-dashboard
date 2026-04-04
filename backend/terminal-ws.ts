@@ -5,16 +5,32 @@
  * Handles WebSocket connections for web terminal
  */
 
+import type { IPty } from 'node-pty';
+import type { WebSocket as WsWebSocket, WebSocketServer } from 'ws';
+import type { Server, IncomingMessage } from 'http';
+
 const log = require('./logger');
-const WebSocket = require('ws');
+const wsModule = require('ws');
+const { WebSocketServer: WsServer } = wsModule;
+const WS_OPEN: number = wsModule.WebSocket.OPEN;
 const pty = require('node-pty');
 const { execFileSync } = require('child_process');
 const crypto = require('crypto');
 const { validateSession } = require('./session');
 const { logSecurityEvent } = require('./security');
 
+// Terminal session type definition
+interface TerminalSession {
+    id: string;
+    process: IPty;
+    ws: WsWebSocket;
+    command: string;
+    user: string;
+    startTime: number;
+}
+
 // Active terminal sessions
-const terminalSessions = new Map();
+const terminalSessions = new Map<string, TerminalSession>();
 
 // Allowed commands (whitelist)
 const ALLOWED_COMMANDS = [
@@ -24,7 +40,7 @@ const ALLOWED_COMMANDS = [
 ];
 
 // Map commands to their package names (for auto-install)
-const COMMAND_PACKAGES = {
+const COMMAND_PACKAGES: Record<string, string> = {
     'htop': 'htop',
     'mc': 'mc',
     'nano': 'nano',
@@ -34,12 +50,12 @@ const COMMAND_PACKAGES = {
 };
 
 // SECURITY: Validate command and arguments
-function validateCommand(cmd) {
+function validateCommand(cmd: unknown): boolean {
     if (!cmd || typeof cmd !== 'string') return false;
     const trimmed = cmd.trim();
     // Don't allow paths
     if (trimmed.includes('/')) return false;
-    
+
     // Parse command and check if base command is allowed
     const parts = trimmed.split(' ');
     const baseCmd = parts[0];
@@ -47,7 +63,7 @@ function validateCommand(cmd) {
 }
 
 // Check if command exists (safe - no shell interpolation)
-function commandExists(cmd) {
+function commandExists(cmd: string): boolean {
     try {
         execFileSync('which', [cmd], { stdio: 'ignore' });
         return true;
@@ -56,15 +72,15 @@ function commandExists(cmd) {
     }
 }
 
-function setupTerminalWebSocket(server) {
-    const wss = new WebSocket.Server({ 
+function setupTerminalWebSocket(server: Server): WebSocketServer {
+    const wss = new WsServer({
         server,
         path: '/api/terminal/ws'
     });
 
-    wss.on('connection', (ws, req) => {
+    wss.on('connection', (ws: WsWebSocket, req: IncomingMessage) => {
         // Extract command and auth from URL
-        const urlParts = req.url.split('?');
+        const urlParts = (req.url ?? '').split('?');
         const params = new URLSearchParams(urlParts[1] || '');
         // SECURITY: Generate sessionId server-side, don't trust client
         const sessionId = crypto.randomBytes(16).toString('hex');
@@ -92,9 +108,9 @@ function setupTerminalWebSocket(server) {
         const baseCmd = command.split(' ')[0].split('/').pop();
 
         // Check if command exists — do NOT auto-install (security risk)
-        if (!commandExists(baseCmd)) {
+        if (!commandExists(baseCmd!)) {
             log.info(`[Terminal] Command not found: ${baseCmd}`);
-            const pkg = COMMAND_PACKAGES[baseCmd] || baseCmd;
+            const pkg = COMMAND_PACKAGES[baseCmd!] || baseCmd;
             ws.send(JSON.stringify({
                 type: 'output',
                 data: `\x1b[31m[HomePiNAS] Comando '${baseCmd}' no encontrado.\x1b[0m\r\n`
@@ -109,13 +125,15 @@ function setupTerminalWebSocket(server) {
         }
 
         // Create PTY process
-        let ptyProcess;
+        let ptyProcess: IPty;
         try {
-            // Parse command and arguments
-            const cmdParts = command.trim().split(' ');
-            const cmd = cmdParts[0];
-            const args = cmdParts.slice(1);
-            
+            // Parse command — strip all user-supplied arguments for security
+            // Terminal shells (bash, zsh, sh) don't need client-supplied args
+            // Client-supplied args could enable injection attacks:
+            // e.g., bash --init-file /malicious/script or bash -c "rm -rf /"
+            const cmd = command.trim().split(' ')[0];
+            const args: string[] = []; // Never pass user-supplied args to PTY — security risk
+
             // SECURITY: Only spawn the exact validated command
             ptyProcess = pty.spawn(cmd, args, {
                 name: 'xterm-256color',
@@ -137,7 +155,7 @@ function setupTerminalWebSocket(server) {
         }
 
         // Store session
-        const termSession = {
+        const termSession: TerminalSession = {
             id: sessionId,
             process: ptyProcess,
             ws: ws,
@@ -147,31 +165,31 @@ function setupTerminalWebSocket(server) {
         };
         terminalSessions.set(sessionId, termSession);
 
-        logSecurityEvent('TERMINAL_PTY_STARTED', { 
-            sessionId, 
-            command, 
-            user: session.username 
+        logSecurityEvent('TERMINAL_PTY_STARTED', {
+            sessionId,
+            command,
+            user: session.username
         }, req.socket.remoteAddress);
 
         // Send ready message
         ws.send(JSON.stringify({ type: 'ready', sessionId }));
 
         // Forward PTY output to WebSocket
-        ptyProcess.onData((data) => {
-            if (ws.readyState === WebSocket.OPEN) {
+        ptyProcess.onData((data: string) => {
+            if (ws.readyState === WS_OPEN) {
                 ws.send(JSON.stringify({ type: 'output', data }));
             }
         });
 
         // Handle PTY exit
-        ptyProcess.onExit(({ exitCode, signal }) => {
+        ptyProcess.onExit(({ exitCode, signal }: { exitCode: number; signal?: number }) => {
             log.info(`[Terminal] PTY exited: ${sessionId}, code: ${exitCode}, signal: ${signal}`);
             terminalSessions.delete(sessionId);
-            
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ 
-                    type: 'exit', 
-                    exitCode, 
+
+            if (ws.readyState === WS_OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'exit',
+                    exitCode,
                     signal,
                     message: `Process exited with code ${exitCode}`
                 }));
@@ -180,17 +198,17 @@ function setupTerminalWebSocket(server) {
         });
 
         // Handle WebSocket messages (input from client)
-        ws.on('message', (message) => {
+        ws.on('message', (message: unknown) => {
             try {
-                const msg = JSON.parse(message.toString());
-                
+                const msg = JSON.parse((message as Buffer).toString());
+
                 switch (msg.type) {
                     case 'input':
                         if (msg.data && ptyProcess) {
                             ptyProcess.write(msg.data);
                         }
                         break;
-                    
+
                     case 'resize':
                         if (msg.cols && msg.rows && ptyProcess) {
                             ptyProcess.resize(
@@ -199,7 +217,7 @@ function setupTerminalWebSocket(server) {
                             );
                         }
                         break;
-                    
+
                     case 'ping':
                         ws.send(JSON.stringify({ type: 'pong' }));
                         break;
@@ -212,24 +230,32 @@ function setupTerminalWebSocket(server) {
         // Handle WebSocket close
         ws.on('close', () => {
             log.info(`[Terminal] WebSocket closed: ${sessionId}`);
-            
-            if (ptyProcess && !ptyProcess.killed) {
-                ptyProcess.kill();
+
+            if (ptyProcess) {
+                try {
+                    ptyProcess.kill();
+                } catch {
+                    // process already exited
+                }
             }
             terminalSessions.delete(sessionId);
-            
-            logSecurityEvent('TERMINAL_SESSION_CLOSED', { 
+
+            logSecurityEvent('TERMINAL_SESSION_CLOSED', {
                 sessionId,
                 user: session.username
             }, '');
         });
 
         // Handle WebSocket error
-        ws.on('error', (err) => {
+        ws.on('error', (err: Error) => {
             log.error(`[Terminal] WebSocket error: ${sessionId}`, err);
-            
-            if (ptyProcess && !ptyProcess.killed) {
-                ptyProcess.kill();
+
+            if (ptyProcess) {
+                try {
+                    ptyProcess.kill();
+                } catch {
+                    // process already exited
+                }
             }
             terminalSessions.delete(sessionId);
         });
@@ -240,28 +266,31 @@ function setupTerminalWebSocket(server) {
 }
 
 // Get active sessions
-function getActiveSessions() {
+function getActiveSessions(): Array<{ id: string; command: string; user: string; startTime: number }> {
     const sessions = [];
     for (const [id, session] of terminalSessions) {
         sessions.push({
             id,
             command: session.command,
             user: session.user,
-            startTime: session.startTime,
-            active: !session.process.killed
+            startTime: session.startTime
         });
     }
     return sessions;
 }
 
 // Kill a specific session
-function killSession(sessionId) {
+function killSession(sessionId: string): boolean {
     const session = terminalSessions.get(sessionId);
     if (session) {
-        if (session.process && !session.process.killed) {
-            session.process.kill('SIGTERM');
+        if (session.process) {
+            try {
+                session.process.kill('SIGTERM');
+            } catch {
+                // process already exited
+            }
         }
-        if (session.ws && session.ws.readyState === WebSocket.OPEN) {
+        if (session.ws && session.ws.readyState === WS_OPEN) {
             session.ws.close(1000, 'Session killed by request');
         }
         terminalSessions.delete(sessionId);

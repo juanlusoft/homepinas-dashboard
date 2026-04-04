@@ -5,7 +5,7 @@
  * Usage: app.use(errorHandler) — must be registered AFTER all routes.
  */
 
-import type { ErrorRequestHandler } from 'express';
+import type { ErrorRequestHandler } from 'express-serve-static-core';
 
 const log = require('../utils/logger');
 

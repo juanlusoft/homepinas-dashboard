@@ -16,9 +16,9 @@ export function cleanup() {
 async function renderActiveDirectoryView() {
     const dashboardContent = document.getElementById('dashboard-content');
     if (!dashboardContent) return;
-    
+
     dashboardContent.innerHTML = '<div class="glass-card"><h3>Active Directory</h3><p>Loading AD information...</p></div>';
-    
+
     try {
         const response = await authFetch('/api/active-directory');
         if (response.ok) {
@@ -34,6 +34,10 @@ async function renderActiveDirectoryView() {
     } catch (error) {
         showNotification('Error loading Active Directory', 'error');
     }
+}
+
+export async function render(container) {
+    await renderActiveDirectoryView();
 }
 
 export { renderActiveDirectoryView };

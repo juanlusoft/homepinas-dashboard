@@ -1,0 +1,396 @@
+/* frontend/style-base.css
+ * Estilos compartidos: variables CSS, sidebar, botones, modals, layout base.
+ * Cargado una vez al inicio en <head>.
+ * Los estilos específicos de cada módulo van en [modulo]/style.css
+ */
+
+/* === CSS VARIABLES === */
+:root {
+    /* HomePiNAS Brand Colors - Synology-inspired */
+    --primary: #0078d4;              /* Azul Synology */
+    --primary-hover: #106ebe;
+    --primary-glow: rgba(0, 120, 212, 0.3);
+    --accent-cyan: #0078d4;          /* Mismo azul para consistencia */
+    --accent-cyan-glow: rgba(0, 120, 212, 0.3);
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ========== LIGHT MODE (Default) - Synology Style ========== */
+[data-theme="light"], :root {
+    --bg-main: #f4f4f5;              /* Fondo gris claro Synology */
+    --bg-surface: #ffffff;           /* Superficies/tarjetas */
+    --header-bg: #ffffff;            /* Header blanco */
+    --header-border: #e5e7eb;
+    --sidebar-bg: #2c3e50;           /* Sidebar azul-gris oscuro */
+    --sidebar-hover: #34495e;
+    --sidebar-text: rgba(255, 255, 255, 0.7);
+    --sidebar-text-active: #ffffff;
+    --sidebar-active-bg: rgba(0, 120, 212, 0.9);
+
+    --text-primary: #333333;         /* Texto principal oscuro */
+    --text-secondary: #666666;       /* Texto secundario — WCAG AA (5.7:1 vs #f4f4f5) */
+    --text-tertiary: #888888;        /* Tertiary — WCAG AA large text only (3.5:1) */
+    --text-on-sidebar: #ffffff;
+
+    --card-bg: #ffffff;
+    --card-border: #e0e0e0;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --hover-bg: #f5f5f5;
+    --active-bg: #ebebeb;
+
+    --input-bg: #ffffff;
+    --input-border: #d0d0d0;
+    --input-text: #333333;
+
+    /* Legacy compatibility */
+    --bg-dark: #2c3e50;
+    --glass-bg: #ffffff;
+    --glass-border: #e0e0e0;
+    --text-dark: var(--text-primary);
+    --text-dim: var(--text-secondary);
+    --text-white: #ffffff;
+    --text: var(--text-primary);
+    --secondary: var(--primary);
+}
+
+/* ========== DARK MODE ========== */
+[data-theme="dark"] {
+    --bg-main: #1a1a1a;              /* Fondo oscuro */
+    --bg-surface: #242424;           /* Superficies */
+    --header-bg: #242424;
+    --header-border: #333333;
+    --sidebar-bg: #1a1a1a;           /* Sidebar oscuro */
+    --sidebar-hover: #2a2a2a;
+    --sidebar-text: rgba(255, 255, 255, 0.6);
+    --sidebar-text-active: #ffffff;
+    --sidebar-active-bg: rgba(0, 120, 212, 0.9);
+
+    --text-primary: #e5e5e5;         /* Texto claro */
+    --text-secondary: #a3a3a3;       /* Texto secundario — WCAG AA (4.6:1 vs #1a1a1a) */
+    --text-tertiary: #8a8a8a;        /* Tertiary — WCAG AA large text (3.6:1 vs #1a1a1a) */
+    --text-on-sidebar: #ffffff;
+
+    --card-bg: #242424;
+    --card-border: #333333;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --hover-bg: #2a2a2a;
+    --active-bg: #333333;
+
+    --input-bg: #1a1a1a;
+    --input-border: #444444;
+    --input-text: #e5e5e5;
+
+    /* Legacy compatibility */
+    --bg-dark: #1a1a1a;
+    --glass-bg: #242424;
+    --glass-border: #333333;
+    --text-dark: var(--text-primary);
+    --text-dim: var(--text-secondary);
+    --text-white: #ffffff;
+    --text: var(--text-primary);
+    --secondary: var(--primary);
+}
+
+/* Dark mode glow effects */
+[data-theme="dark"] .btn-primary {
+    box-shadow: 0 0 20px var(--primary-glow), 0 4px 15px var(--primary-glow);
+}
+
+[data-theme="dark"] .glass-card h3,
+[data-theme="dark"] .glass-card h4 {
+    text-shadow: 0 0 10px var(--accent-cyan-glow);
+}
+
+[data-theme="dark"] .nav-links li.active {
+    box-shadow: inset 3px 0 10px var(--primary-glow);
+}
+
+/* === Appended from style.css lines 1095–1144 === */
+
+/* Modal System */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.btn-close:hover {
+    color: white;
+}
+
+.modal-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* === Appended from style.css lines 2352–2401 === */
+
+/* ======================================================================   v2.1.0 NEW STYLES
+   ============================================================================= */
+
+/* Settings Controls (Theme + Language) - Only for login/setup views */
+.settings-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10001;
+    display: flex;
+    gap: 8px;
+}
+
+/* Hide old settings controls when dashboard is active (has its own header) */
+#dashboard-view.active ~ .settings-controls,
+#dashboard-view.view.active ~ .settings-controls,
+body:has(#dashboard-view.active) .settings-controls {
+    display: none !important;
+}
+
+.settings-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--card-shadow);
+}
+
+.settings-btn:hover {
+    transform: scale(1.05);
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .settings-btn {
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Hide old theme toggle */
+.theme-toggle {
+    display: none;
+}
+
+/* === Appended from style.css lines 2856–2879 === */
+
+/* Checkbox Group */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.checkbox-group a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.checkbox-group a:hover {
+    text-decoration: underline;
+}
+
+/* === Appended from style.css lines 2923–2951 === */
+
+/* ========== GLOBAL SELECT FIX (Dark Mode) ========== */
+select,
+.modal select,
+.modal-content select {
+    background: var(--input-bg, var(--card-bg, #252525)) !important;
+    color: var(--input-text, var(--text-primary, #f5f5f5)) !important;
+    border: 1px solid var(--input-border, var(--card-border, #404040)) !important;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+select option,
+.modal select option,
+.modal-content select option {
+    background: var(--input-bg, var(--card-bg, #252525));
+    color: var(--input-text, var(--text-primary, #f5f5f5));
+}
+
+[data-theme="dark"] select,
+[data-theme="dark"] .modal select {
+    background: #252525 !important;
+    color: #f5f5f5 !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] select option {
+    background: #252525;
+    color: #f5f5f5;
+}
+
+/* === Appended from style.css lines 13030–13152 === */
+
+/* ========== USER MENU DROPDOWN ========== */
+.user-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    margin-top: 8px;
+}
+
+.user-menu-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu-option {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.user-menu-option:hover {
+    background-color: var(--hover-bg);
+}
+
+.user-menu-option:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.user-menu-option:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.user-menu-icon {
+    margin-right: 12px;
+    font-size: 1.1em;
+    width: 20px;
+    text-align: center;
+}
+
+.user-menu-divider {
+    height: 1px;
+    background-color: var(--card-border);
+    margin: 4px 0;
+}
+
+/* ========== NOTIFICATION CENTER ========== */
+#notification-center-modal .notification-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px 20px;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+    margin-bottom: 16px;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* ========== CHANGE PASSWORD MODAL ========== */
+#change-password-modal .modal-body {
+    padding: 24px;
+}
+
+#change-password-modal .input-group {
+    margin-bottom: 20px;
+}
+
+#change-password-modal .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+#change-password-modal .modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+}
+
+#change-password-modal .modal-actions button[type="button"] {
+    background: var(--bg-main);
+    color: var(--text-primary);
+    border: 1px solid var(--card-border);
+}
+
+#change-password-modal .modal-actions button[type="submit"] {
+    background: var(--primary);
+    color: white;
+}
+
+#change-password-modal .modal-actions button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}

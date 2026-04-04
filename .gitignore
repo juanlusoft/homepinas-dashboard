@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# SSL certificates (auto-generated, never commit private keys)
+backend/certs/*.key
+backend/certs/*.crt
+backend/certs/*.pem
+
+# Config with secrets (path relative to project root)
+config/.totp-server-key
+config/data.json
+config/*.db
+config/*.db-shm
+config/*.db-wal
+backend/config/.totp-server-key
+backend/config/data.json
+backend/config/*.db
+
+# Temp files
+backend/.tmp/
+/tmp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo

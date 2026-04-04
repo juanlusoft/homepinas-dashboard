@@ -602,4 +602,8 @@ export function cleanup() {
 // EXPORTS
 // ════════════════════════════════════════════════════════════════════════════════
 
+export async function render(container) {
+    await renderVPNView();
+}
+
 export { renderVPNView };

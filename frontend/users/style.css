@@ -1,0 +1,462 @@
+/* users/style.css — extracted from style.css */
+/* Lines from source: 10155–10319, 11255–11549 */
+
+/* Users & 2FA */
+.users-loading {
+    color: var(--text-dim);
+}
+
+.users-error {
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+.users-modal {
+    max-width: 450px;
+    width: 90%;
+}
+
+.users-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.users-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.users-role-select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    width: 100%;
+}
+
+.users-2fa-enabled-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.users-2fa-icon-enabled {
+    font-size: 2rem;
+}
+
+.users-2fa-enabled-title {
+    font-weight: 600;
+    color: #10b981;
+}
+
+.users-2fa-enabled-text {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.users-2fa-disable-btn {
+    margin-left: auto;
+    background: #ef4444;
+}
+
+.users-2fa-disabled-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.users-2fa-icon-disabled {
+    font-size: 2rem;
+}
+
+.users-2fa-disabled-title {
+    font-weight: 600;
+}
+
+.users-2fa-disabled-text {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.users-2fa-enable-btn {
+    margin-left: auto;
+}
+
+.users-2fa-error {
+    color: var(--text-dim);
+}
+
+.users-totp-center {
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.users-totp-intro {
+    margin-bottom: 15px;
+}
+
+.users-totp-qr-box {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-bottom: 15px;
+    border: 1px solid var(--border);
+}
+
+.users-totp-secret-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.users-totp-secret-code {
+    display: block;
+    background: var(--bg-hover);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    word-break: break-all;
+    user-select: all;
+    cursor: text;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.users-totp-copy-btn {
+    margin-top: 10px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-hover);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.users-totp-account {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    word-break: break-all;
+    margin-bottom: 20px;
+}
+
+.users-totp-input-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.users-totp-input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    width: 160px;
+    text-align: center;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+}
+
+/* Users & 2FA Section — 2-column layout */
+.users-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+@media (min-width: 1100px) {
+    .users-layout {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.users-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.users-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.users-table {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.users-table-header {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 140px 90px;
+    padding: 12px 20px;
+    background: var(--bg-hover);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.users-table-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 140px 90px;
+    padding: 12px 20px;
+    align-items: center;
+    border-top: 1px solid var(--border);
+}
+
+.users-table-row:hover {
+    background: var(--bg-hover);
+}
+
+.users-name {
+    font-weight: 500;
+}
+
+.users-you-badge {
+    color: var(--accent);
+    font-size: 0.8rem;
+}
+
+.users-role-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.users-role-admin {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.users-role-user {
+    background: rgba(99, 102, 241, 0.15);
+    color: #6366f1;
+}
+
+.users-role-readonly {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+.users-date-text {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.users-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.users-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0.5;
+    padding: 4px;
+    border-radius: 4px;
+    transition: opacity 0.2s, background 0.2s;
+}
+
+.users-action-btn:hover {
+    opacity: 1;
+    background: var(--bg-hover);
+}
+
+.users-action-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* My Account Card */
+.users-account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.users-account-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.users-account-label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.users-account-value {
+    font-weight: 500;
+}
+
+.users-password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.users-password-message {
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 1.2em;
+}
+
+.users-password-error {
+    color: #ef4444;
+}
+
+.users-password-success {
+    color: #10b981;
+}
+
+.users-loading-text {
+    color: var(--text-dim);
+}
+
+.users-error-text {
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+.users-modal-content {
+    max-width: 450px;
+    width: 90%;
+}
+
+.users-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.users-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.users-role-select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    width: 100%;
+}
+
+.users-2fa-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.users-2fa-active-title {
+    font-weight: 600;
+    color: #10b981;
+}
+
+.users-2fa-description {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.users-2fa-disable-btn {
+    margin-left: auto;
+    background: #ef4444;
+}
+
+.users-2fa-error {
+    color: var(--text-dim);
+}
+
+.users-2fa-setup-container {
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.users-2fa-setup-instruction {
+    margin-bottom: 15px;
+}
+
+.users-2fa-qr-wrapper {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-bottom: 15px;
+    border: 1px solid var(--border);
+}
+
+.users-2fa-secret-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.users-2fa-secret-code {
+    display: block;
+    background: var(--bg-hover);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    word-break: break-all;
+    user-select: all;
+    cursor: text;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.users-2fa-copy-btn {
+    margin-top: 10px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-hover);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.users-2fa-account-info {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    word-break: break-all;
+    margin-bottom: 20px;
+}
+
+.users-2fa-verify-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.users-2fa-verify-input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    width: 160px;
+    text-align: center;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+}

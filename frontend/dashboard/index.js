@@ -7,7 +7,7 @@ import { authFetch } from '../api.js';
 import { showNotification } from '../notifications.js';
 import { state } from '../state.js';
 import { t } from '../../i18n.js';
-import { escapeHtml, formatBytes } from '../utils.js';
+import { escapeHtml, formatBytes, formatUptime } from '../utils.js';
 
 let _dashListeners = [];
 
@@ -75,6 +75,10 @@ export function cleanup() {
         element.removeEventListener(event, handler);
     });
     _dashListeners = [];
+}
+
+export async function render(container) {
+    await renderDashboard();
 }
 
 export { renderDashboard };

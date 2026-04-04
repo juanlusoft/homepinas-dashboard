@@ -1,11 +1,12 @@
 /**
  * Polling Module - Global data updates and monitoring
- * Extracted from main.js
  */
 
 import { authFetch } from '../api.js';
 import { showNotification } from '../notifications.js';
 import { state } from '../state.js';
+
+const API_BASE = window.location.origin + '/api';
 
 let _pollingIntervals = {
     stats: null,
@@ -13,26 +14,48 @@ let _pollingIntervals = {
     storage: null
 };
 
-// ════════════════════════════════════════════════════════════════════════════════
-// GLOBAL POLLING FUNCTIONS
-// ════════════════════════════════════════════════════════════════════════════════
+function stopGlobalPolling() {
+    Object.keys(_pollingIntervals).forEach(key => {
+        if (_pollingIntervals[key]) {
+            clearInterval(_pollingIntervals[key]);
+            _pollingIntervals[key] = null;
+        }
+    });
+    if (state.pollingIntervals) {
+        Object.keys(state.pollingIntervals).forEach(key => {
+            if (state.pollingIntervals[key]) {
+                clearInterval(state.pollingIntervals[key]);
+                state.pollingIntervals[key] = null;
+            }
+        });
+    }
+}
+
+async function updatePublicIP() {
+    try {
+        const res = await authFetch(`${API_BASE}/network/public-ip`);
+        if (res.ok) {
+            const data = await res.json();
+            state.publicIP = data.ip || data.publicIP || '';
+            const el = document.getElementById('public-ip-display');
+            if (el) el.textContent = state.publicIP;
+        }
+    } catch (e) {
+        console.debug('Public IP fetch failed:', e.message);
+    }
+}
 
 function startGlobalPolling() {
-    // Polling System Stats (CPU/RAM/Temp)
-    state.pollingIntervals.stats = setInterval(async () => {
+    _pollingIntervals.stats = setInterval(async () => {
         try {
             const res = await authFetch(`${API_BASE}/system/stats`);
             if (res.ok) {
                 state.globalStats = await res.json();
-
-                // Re-render dashboard if still on dashboard view
-                // Do NOT increment renderGeneration — only user navigation does that
                 if (state.currentView === "dashboard") {
-                    renderDashboard(true);
+                    import('../dashboard/index.js').then(m => m.renderDashboard(true)).catch(() => {});
                 }
             }
         } catch (e) {
-            // Session expired - authFetch handles redirect, stop polling
             if (e.message === 'Session expired' || e.message === 'CSRF_EXPIRED') {
                 stopGlobalPolling();
                 return;
@@ -41,14 +64,9 @@ function startGlobalPolling() {
         }
     }, 5000);
 
-    // Polling Public IP
     updatePublicIP();
-    state.pollingIntervals.publicIP = setInterval(updatePublicIP, 1000 * 60 * 10);
-    
-    // Start disk detection polling
-    startDiskDetectionPolling();
+    _pollingIntervals.publicIP = setInterval(updatePublicIP, 1000 * 60 * 10);
 }
-
 
 export {
     startGlobalPolling,

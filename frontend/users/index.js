@@ -159,5 +159,8 @@ async function renderUsersView() {
     await load2FAStatus();
 }
 
+export async function render(container) {
+    await renderUsersView();
+}
 
 export { renderUsersView };

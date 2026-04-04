@@ -17,7 +17,7 @@ const generalLimiter: RateLimitRequestHandler = rateLimit({
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => {
+    skip: (req: { path: string }) => {
         // SECURITY: Only skip specific polling endpoints that need high frequency
         const skipPaths = [
             '/api/system/stats',
@@ -95,7 +95,7 @@ const agentRegisterLimiter: RateLimitRequestHandler = rateLimit({
     message: { error: 'Too many agent registration attempts, try again later' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => req.ip // per-IP
+    keyGenerator: (req: { ip: string }) => req.ip // per-IP
 });
 
 /**
@@ -108,7 +108,7 @@ const agentPollLimiter: RateLimitRequestHandler = rateLimit({
     message: { error: 'Too many agent requests, slow down' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => req.ip
+    keyGenerator: (req: { ip: string }) => req.ip
 });
 
 module.exports = {

@@ -1,0 +1,1561 @@
+/* storage/style.css — extracted from style.css */
+/* Lines from source: 766–970, 2131–2246, 2677–2855, 3815–4623, 6617–6666, 13294–13492 */
+
+/* Granular Storage Table */
+.disk-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+}
+
+.disk-table th {
+    text-align: left;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.disk-table td {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--glass-border);
+    vertical-align: middle;
+}
+
+.role-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.role-btn {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--glass-border);
+    color: var(--text-dim);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.role-btn.active[data-role="data"] {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(132, 204, 22, 0.15);
+}
+
+.role-btn.active[data-role="parity"] {
+    border-color: #f59e0b;
+    color: #b45309;
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.role-btn.active[data-role="cache"] {
+    border-color: #10b981;
+    color: #047857;
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.summary-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.storage-footer {
+    margin-top: 30px;
+}
+
+.hint {
+    margin-top: 15px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.badge.nvme {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.badge.hdd {
+    background: rgba(99, 102, 241, 0.2);
+    color: #6366f1;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+/* Advanced Storage Dashboard */
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-badge.data {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.role-badge.parity {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.role-badge.cache {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.role-badge.independent {
+    background: rgba(20, 184, 166, 0.2);
+    color: #2dd4bf;
+    border: 1px solid rgba(20, 184, 166, 0.3);
+}
+
+.role-badge.none {
+    background: rgba(71, 85, 105, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.disk-card-advanced {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.disk-header-adv {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.disk-progress-container {
+    width: 100%;
+}
+
+.disk-usage-bar {
+    height: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.disk-usage-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+    transition: width 1s ease-out;
+}
+
+.telemetry-stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.temp-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+
+.temp-indicator.hot {
+    color: #ef4444;
+}
+
+.temp-indicator.warm {
+    color: #f59e0b;
+}
+
+.temp-indicator.cool {
+    color: #34d399;
+}
+
+/* Storage Progress Modal */
+.storage-progress {
+    max-width: 500px;
+    width: 90%;
+}
+
+.storage-progress .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.progress-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+    border-left: 3px solid rgba(0, 0, 0, 0.06);
+    flex-wrap: wrap;
+}
+
+.progress-step.active {
+    border-left-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.progress-step.completed {
+    border-left-color: #10b981;
+}
+
+.progress-step.error {
+    border-left-color: #ef4444;
+}
+
+.progress-step .step-icon {
+    font-size: 1.2rem;
+    min-width: 30px;
+    text-align: center;
+}
+
+.progress-step .step-text {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.progress-step.completed .step-icon::before {
+    content: '✅';
+}
+
+.progress-step.active .step-icon::before {
+    content: '🔄';
+    animation: spin 1s linear infinite;
+}
+
+.progress-step.error .step-icon::before {
+    content: '❌';
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.sync-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.sync-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #8b5cf6);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.sync-status {
+    width: 100%;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 5px;
+    text-align: center;
+}
+
+.progress-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    text-align: center;
+}
+
+.progress-footer p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.progress-footer .btn-primary {
+    margin-top: 15px;
+    display: none;
+}
+
+.progress-footer.complete .btn-primary {
+    display: inline-block;
+}
+
+/* Storage Array View (Cockpit Style) */
+.storage-array-view {
+    width: 100%;
+}
+
+.storage-array-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.storage-array-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.storage-total-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.storage-total-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.storage-total-stat .label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.storage-total-stat .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.storage-array-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.storage-mount-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 150px 100px;
+    gap: 15px;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+    border-left: 4px solid var(--primary);
+}
+
+.storage-mount-row.parity {
+    border-left-color: #f59e0b;
+}
+
+.storage-mount-row.cache {
+    border-left-color: #10b981;
+}
+
+.storage-mount-row.pool {
+    border-left-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.mount-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mount-path {
+    font-family: monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.mount-device {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.mount-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mount-bar {
+    height: 10px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.mount-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.mount-bar-fill.low {
+    background: #10b981;
+}
+
+.mount-bar-fill.medium {
+    background: #f59e0b;
+}
+
+.mount-bar-fill.high {
+    background: #ef4444;
+}
+
+.mount-bar-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.mount-size {
+    text-align: right;
+}
+
+.mount-size .available {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.mount-size .total {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.mount-type {
+    text-align: center;
+}
+
+.mount-type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.mount-type-badge.ext4 {
+    background: rgba(99, 102, 241, 0.2);
+    color: #6366f1;
+}
+
+.mount-type-badge.mergerfs {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+}
+
+.mount-type-badge.xfs {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+/* Responsive adjustments for storage view */
+@media (max-width: 900px) {
+    .storage-mount-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .mount-size, .mount-type {
+        text-align: left;
+    }
+}
+
+/* ========== STORAGE WIZARD ========== */
+.storage-wizard {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.wizard-container {
+    position: relative;
+    min-height: 400px;
+}
+
+/* Progress indicator */
+.wizard-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    padding: 0 20px;
+}
+
+.wizard-progress-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-progress-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--hover-bg);
+    border: 2px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.wizard-progress-dot.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.wizard-progress-dot.completed {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.wizard-progress-dot.completed::after {
+    content: '✓';
+}
+
+.wizard-progress-line {
+    width: 40px;
+    height: 2px;
+    background: var(--card-border);
+    transition: background 0.3s ease;
+}
+
+.wizard-progress-line.completed {
+    background: var(--success);
+}
+
+/* Wizard steps */
+.wizard-step {
+    display: none !important;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.wizard-step.active {
+    display: block !important;
+    opacity: 1;
+    transform: translateX(0);
+    animation: wizardSlideIn 0.4s ease-out;
+}
+
+.wizard-step.exit {
+    animation: wizardSlideOut 0.3s ease-in forwards;
+}
+
+@keyframes wizardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes wizardSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+/* Step content */
+.wizard-step-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.wizard-step-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    display: block;
+    animation: wizardIconPulse 2s ease-in-out infinite;
+}
+
+@keyframes wizardIconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.wizard-step-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.wizard-step-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Disk selection cards */
+.wizard-disk-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 24px 0;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.wizard-disk-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--hover-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wizard-disk-card:hover {
+    border-color: var(--primary);
+    background: var(--active-bg);
+}
+
+.wizard-disk-card.selected {
+    border-color: var(--primary);
+    background: rgba(0, 120, 212, 0.1);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.wizard-disk-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.wizard-disk-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--card-border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    background: var(--card-bg);
+}
+
+.wizard-disk-card.selected .wizard-disk-checkbox {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.wizard-disk-checkbox::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.wizard-disk-card.selected .wizard-disk-checkbox::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.wizard-disk-radio {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--card-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    background: var(--card-bg);
+}
+
+.wizard-disk-card.selected .wizard-disk-radio {
+    border-color: var(--primary);
+}
+
+.wizard-disk-radio::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.wizard-disk-card.selected .wizard-disk-radio::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.wizard-disk-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.wizard-disk-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.wizard-disk-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-disk-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.wizard-disk-size {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.wizard-disk-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.wizard-disk-badge.nvme {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.wizard-disk-badge.ssd {
+    background: rgba(99, 102, 241, 0.2);
+    color: #6366f1;
+}
+
+.wizard-disk-badge.hdd {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+/* Detecting disks animation */
+.wizard-detecting {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.wizard-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--card-border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: wizardSpin 1s linear infinite;
+    margin: 0 auto 24px;
+}
+
+@keyframes wizardSpin {
+    to { transform: rotate(360deg); }
+}
+
+.wizard-detecting-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* Skip/Optional button */
+.wizard-skip-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 8px 16px;
+    margin-top: 16px;
+    transition: color 0.2s;
+}
+
+.wizard-skip-btn:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+/* Summary step */
+.wizard-summary {
+    background: var(--hover-bg);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+}
+
+.wizard-summary-section {
+    margin-bottom: 20px;
+}
+
+.wizard-summary-section:last-child {
+    margin-bottom: 0;
+}
+
+.wizard-summary-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.wizard-summary-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wizard-summary-disk {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.wizard-summary-disk .disk-role {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.wizard-summary-disk .disk-role.data {
+    background: rgba(99, 102, 241, 0.2);
+    color: #6366f1;
+}
+
+.wizard-summary-disk .disk-role.parity {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.wizard-summary-disk .disk-role.cache {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.wizard-summary-empty {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.wizard-summary-total {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wizard-summary-total-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.wizard-summary-total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+
+/* Filesystem Selector */
+.wizard-filesystem-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--card-border);
+}
+
+.wizard-filesystem-options {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.wizard-fs-option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wizard-fs-option:hover {
+    border-color: var(--primary);
+    background: var(--card-hover);
+}
+
+.wizard-fs-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.wizard-fs-option input[type="radio"]:checked + .wizard-fs-content {
+    color: var(--primary);
+}
+
+.wizard-fs-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wizard-fs-content strong {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.wizard-fs-content small {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Progress step */
+.wizard-progress-list {
+    margin: 24px 0;
+}
+
+.wizard-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.wizard-progress-item:last-child {
+    border-bottom: none;
+}
+
+.wizard-progress-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.wizard-progress-icon.pending {
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+}
+
+.wizard-progress-icon.running {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    animation: wizardProgressPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes wizardProgressPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.wizard-progress-icon.done {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.wizard-progress-icon.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.wizard-progress-text {
+    flex: 1;
+}
+
+.wizard-progress-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.wizard-progress-status {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Completed step */
+.wizard-completed {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.wizard-completed-icon {
+    font-size: 5rem;
+    margin-bottom: 24px;
+    animation: wizardCompletedBounce 0.6s ease;
+}
+
+@keyframes wizardCompletedBounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.wizard-completed-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--success);
+    margin-bottom: 12px;
+}
+
+.wizard-completed-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.wizard-completed-path {
+    font-family: monospace;
+    background: var(--hover-bg);
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 0.95rem;
+    color: var(--primary);
+}
+
+/* Wizard navigation */
+.wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--card-border);
+}
+
+.wizard-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-btn-back {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+}
+
+.wizard-btn-back:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.wizard-btn-back:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.wizard-btn-next {
+    background: var(--primary);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.wizard-btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--primary-glow);
+}
+
+.wizard-btn-next:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.wizard-btn-create {
+    background: var(--success);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.wizard-btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* Info box */
+.wizard-info-box {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.wizard-info-box.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.wizard-info-box-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.wizard-network-section {
+    margin: 16px 0;
+}
+
+.wizard-network-toggle {
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    width: 100%;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.wizard-network-toggle:hover {
+    background: var(--hover-bg);
+}
+
+.wizard-network-form {
+    margin-top: 12px;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.wizard-network-form .input-group {
+    margin-bottom: 10px;
+}
+
+/* File location badges */
+.fm-location-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    margin-left: 6px;
+    vertical-align: middle;
+    opacity: 0.8;
+}
+
+.fm-location-cache {
+    color: #f59e0b;
+}
+
+.fm-location-data {
+    color: #6366f1;
+}
+
+.wizard-info-box-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* No disks message */
+.wizard-no-disks {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.wizard-no-disks-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* Storage wizard responsive */
+@media (max-width: 600px) {
+    .wizard-progress {
+        gap: 4px;
+    }
+
+    .wizard-progress-dot {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+
+    .wizard-progress-line {
+        width: 20px;
+    }
+
+    .wizard-step-title {
+        font-size: 1.25rem;
+    }
+
+    .wizard-disk-card {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .wizard-disk-icon {
+        font-size: 1.5rem;
+    }
+
+    .wizard-disk-size {
+        font-size: 0.95rem;
+    }
+
+    .wizard-nav {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .wizard-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ======================================================================   STORAGE WIZARD STYLES
+   ============================================================================= */
+
+/* Retry button spacing */
+.storage-retry-btn {
+    margin-top: 16px;
+}
+
+/* Detection success container */
+.storage-detection-success {
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* Large success icon */
+.storage-success-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+/* Detection summary text */
+.storage-detection-summary {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+/* Detected disks container */
+.storage-detected-disks {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+/* Individual detected disk badge */
+.storage-disk-badge {
+    background: var(--hover-bg);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* Disk size highlight */
+.storage-disk-size-highlight {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Wizard Network Configuration */
+.wizard-network-config {
+    margin: 24px 0;
+}
+
+.wizard-section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wizard-section-toggle:hover {
+    background: var(--background-tertiary);
+    border-color: var(--primary);
+}
+
+.wizard-section-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.wizard-section-text {
+    flex: 1;
+}
+
+.wizard-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.wizard-section-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.wizard-section-arrow {
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.wizard-section-toggle.expanded .wizard-section-arrow {
+    transform: rotate(180deg);
+}
+
+.wizard-network-content {
+    margin-top: 16px;
+    padding: 20px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.wizard-network-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.wizard-radio-option {
+    display: flex;
+    cursor: pointer;
+}
+
+.wizard-radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.wizard-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--background-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.wizard-radio-option input[type="radio"]:checked + .wizard-radio-label {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.wizard-radio-label:hover {
+    border-color: var(--primary);
+}
+
+.wizard-radio-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.wizard-radio-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.wizard-radio-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.wizard-network-manual {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.wizard-form-group {
+    margin-bottom: 16px;
+}
+
+.wizard-form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.wizard-form-input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.wizard-form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.wizard-form-hint {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.wizard-btn-secondary {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.wizard-btn-secondary:hover {
+    background: var(--background-secondary);
+    border-color: var(--primary);
+}
+
+.wizard-network-status {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+}
+
+.wizard-network-status.success {
+    display: block;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.wizard-network-status.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.wizard-network-status.info {
+    display: block;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #3b82f6;
+}

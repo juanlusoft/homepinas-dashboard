@@ -14,12 +14,20 @@ const DATA_FILE = path.join(__dirname, '..', 'config', 'data.json');
 
 interface AppData {
   notifications?: {
-    email?: Record<string, unknown>;
-    telegram?: Record<string, unknown>;
+    email?: Record<string, unknown> | null;
+    telegram?: Record<string, unknown> | null;
+    errorReporting?: Record<string, unknown> | null;
+    history?: unknown[];
+    [key: string]: unknown;
   };
   shortcuts?: Array<Record<string, unknown>>;
-  users?: Record<string, unknown>;
-  settings?: Record<string, unknown>;
+  users?: unknown[] | Record<string, unknown>;
+  settings?: {
+    email?: Record<string, unknown>;
+    telegram?: Record<string, unknown>;
+    errorReporting?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 

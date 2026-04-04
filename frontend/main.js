@@ -2,32 +2,15 @@
 // This file is the application bootstrap. All business logic is in modules/
 
 import { initI18n, t, applyTranslations, getCurrentLang } from './i18n.js';
-import { escapeHtml, formatBytes, debounce, formatUptime } from './modules/utils.js';
+import { escapeHtml, formatBytes, debounce, formatUptime } from './utils.js';
 
 // Core modules
-import { initAPI, authFetch, loadSession, saveSession, clearSession } from './modules/api.js';
-import { showNotification, showConfirmModal, celebrateWithConfetti, dismissNotification, cleanupNotifications } from './modules/notifications.js';
-import { navigateTo, getViewFromPath, handleRouteChange, switchView as routerSwitchView, setupRouteListeners, cleanupRouter } from './modules/router.js';
-import * as StateModule from './modules/state.js';
-
-// Feature modules
-import { renderTerminalView, cleanup as cleanupTerminal } from './modules/terminal/index.js';
-import { renderFilesView, cleanup as cleanupFiles } from './modules/files/index.js';
-import { renderDockerManager, cleanup as cleanupDocker } from './modules/docker/index.js';
-import { renderStorageDashboard, cleanup as cleanupWizard } from './modules/storage/wizard.js';
-import { renderVPNView, cleanup as cleanupVPN } from './modules/vpn/index.js';
-import { renderSystemView, cleanup as cleanupSystem } from './modules/system/index.js';
-import { renderNetworkManager, cleanup as cleanupNetwork } from './modules/network/index.js';
-import { renderBackupView, renderActiveBackupView, cleanup as cleanupBackup } from './modules/backup/index.js';
-import { renderActiveDirectoryView, cleanup as cleanupAD } from './modules/active-directory/index.js';
-import { renderCloudSyncView, cleanup as cleanupCloudSync } from './modules/cloud-sync/index.js';
-import { renderCloudBackupView, cleanup as cleanupCloudBackup } from './modules/cloud-backup/index.js';
-import { renderHomeStoreView, cleanup as cleanupHomeStore } from './modules/homestore/index.js';
-import { renderLogsView, cleanup as cleanupLogs } from './modules/logs/index.js';
-import { renderUsersView, cleanup as cleanupUsers } from './modules/users/index.js';
-import { renderDashboard, cleanup as cleanupDashboard } from './modules/dashboard/index.js';
-import { renderUPSSection, cleanup as cleanupUPS } from './modules/ups/index.js';
-import { startDiskDetectionPolling, stopGlobalPolling, cleanup as cleanupDiskMgmt } from './modules/disk-management/index.js';
+import { initAPI, authFetch, loadSession, saveSession, clearSession } from './api.js';
+import { showNotification, showConfirmModal, celebrateWithConfetti, dismissNotification, cleanupNotifications } from './notifications.js';
+import { navigateTo, getViewFromPath, handleRouteChange, switchView as routerSwitchView, setupRouteListeners, cleanupRouter } from './router.js';
+import * as StateModule from './state.js';
+import { loadModule } from './modules/registry.js';
+import { startDiskDetectionPolling, stopGlobalPolling } from './disk-management/index.js';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // GLOBAL STATE & CONFIG
@@ -59,23 +42,6 @@ const setupForm = document.getElementById('setup-form');
 function switchView(viewName, skipRender = false) {
     const previousView = state.currentView;
 
-    // Cleanup previous view listeners
-    if (previousView === 'files') cleanupFiles();
-    if (previousView === 'docker') cleanupDocker();
-    if (previousView === 'terminal') cleanupTerminal();
-    if (previousView === 'storage') cleanupWizard();
-    if (previousView === 'vpn') cleanupVPN();
-    if (previousView === 'system') cleanupSystem();
-    if (previousView === 'network') cleanupNetwork();
-    if (previousView === 'backup') cleanupBackup();
-    if (previousView === 'active-directory') cleanupAD();
-    if (previousView === 'cloud-sync') cleanupCloudSync();
-    if (previousView === 'cloud-backup') cleanupCloudBackup();
-    if (previousView === 'homestore') cleanupHomeStore();
-    if (previousView === 'logs') cleanupLogs();
-    if (previousView === 'users') cleanupUsers();
-    if (previousView === 'dashboard') cleanupDashboard();
-    if (previousView === 'ups') cleanupUPS();
     cleanupNotifications();
 
     Object.values(views).forEach(v => v?.classList.remove('active'));
@@ -93,24 +59,7 @@ function switchView(viewName, skipRender = false) {
  */
 async function renderContent(view) {
     state.currentView = view;
-    dashboardContent.innerHTML = '';
-
-    if (view === 'dashboard') await renderDashboard();
-    else if (view === 'docker') await renderDockerManager();
-    else if (view === 'storage') await renderStorageDashboard();
-    else if (view === 'files') await renderFilesView();
-    else if (view === 'terminal') await renderTerminalView(dashboardContent);
-    else if (view === 'network') await renderNetworkManager();
-    else if (view === 'backup') await renderBackupView();
-    else if (view === 'active-backup') await renderActiveBackupView();
-    else if (view === 'active-directory') await renderActiveDirectoryView();
-    else if (view === 'cloud-sync') await renderCloudSyncView();
-    else if (view === 'cloud-backup') await renderCloudBackupView();
-    else if (view === 'vpn') await renderVPNView();
-    else if (view === 'homestore') await renderHomeStoreView();
-    else if (view === 'logs') await renderLogsView();
-    else if (view === 'users') await renderUsersView();
-    else if (view === 'system') await renderSystemView();
+    await loadModule(view, dashboardContent);
 }
 
 // ════════════════════════════════════════════════════════════════════════════════

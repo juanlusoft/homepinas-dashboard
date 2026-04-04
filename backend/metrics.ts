@@ -18,6 +18,8 @@
  *   - homepinas_smart_cache_age_seconds (gauge)
  */
 
+import type { RequestHandler } from 'express-serve-static-core';
+
 const log = require('./logger');
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -27,10 +29,10 @@ const log = require('./logger');
 const PREFIX = 'homepinas';
 
 // Request counters: { "GET:/api/system/stats:200": count }
-const requestCounters = {};
+const requestCounters: Record<string, number> = {};
 
 // Request durations: { "GET:/api/system/stats": [durations...] }
-const requestDurations = {};
+const requestDurations: Record<string, number[]> = {};
 
 // Histogram buckets (seconds)
 const BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
@@ -42,7 +44,7 @@ const MAX_DURATIONS_PER_ROUTE = 1000;
  * Normalize route path for metric labels.
  * Replaces dynamic segments (IDs, hashes) with placeholders.
  */
-function normalizeRoute(path) {
+function normalizeRoute(path: string): string {
     if (!path) return 'unknown';
     return path
         .replace(/\/[0-9a-f]{12,64}/gi, '/:id')   // container IDs, hashes
@@ -53,7 +55,7 @@ function normalizeRoute(path) {
 /**
  * Record an HTTP request.
  */
-function recordRequest(method, path, statusCode, durationMs) {
+function recordRequest(method: string, path: string, statusCode: number, durationMs: number): void {
     const route = normalizeRoute(path);
     const durationS = durationMs / 1000;
 
@@ -78,7 +80,7 @@ function recordRequest(method, path, statusCode, durationMs) {
 /**
  * Calculate percentile from sorted array.
  */
-function percentile(sorted, p) {
+function percentile(sorted: number[], p: number): number {
     if (sorted.length === 0) return 0;
     const idx = Math.ceil(sorted.length * p) - 1;
     return sorted[Math.max(0, idx)];
@@ -87,8 +89,8 @@ function percentile(sorted, p) {
 /**
  * Generate Prometheus text format output.
  */
-function generateMetrics() {
-    const lines = [];
+function generateMetrics(): string {
+    const lines: string[] = [];
     const now = Date.now();
 
     // ── HTTP Request Counter ──
@@ -156,11 +158,11 @@ function generateMetrics() {
     // ── Node.js Runtime ──
     lines.push(`# HELP ${PREFIX}_nodejs_active_handles Active libuv handles`);
     lines.push(`# TYPE ${PREFIX}_nodejs_active_handles gauge`);
-    lines.push(`${PREFIX}_nodejs_active_handles ${process._getActiveHandles?.().length || 0}`);
+    lines.push(`${PREFIX}_nodejs_active_handles ${(process as any)._getActiveHandles?.().length || 0}`);
 
     lines.push(`# HELP ${PREFIX}_nodejs_active_requests Active libuv requests`);
     lines.push(`# TYPE ${PREFIX}_nodejs_active_requests gauge`);
-    lines.push(`${PREFIX}_nodejs_active_requests ${process._getActiveRequests?.().length || 0}`);
+    lines.push(`${PREFIX}_nodejs_active_requests ${(process as any)._getActiveRequests?.().length || 0}`);
 
     // ── Uptime ──
     lines.push(`# HELP ${PREFIX}_uptime_seconds Process uptime in seconds`);
@@ -178,7 +180,7 @@ function generateMetrics() {
 /**
  * Express middleware to track request metrics.
  */
-function metricsMiddleware(req, res, next) {
+const metricsMiddleware: RequestHandler = (req, res, next) => {
     // Skip metrics/health endpoints to avoid self-referential noise
     if (req.path === '/metrics' || req.path === '/health') {
         return next();
@@ -196,12 +198,22 @@ function metricsMiddleware(req, res, next) {
 
     res.on('finish', onFinish);
     next();
+};
+
+interface RouteStats {
+    count: number;
+    min: number;
+    max: number;
+    mean: number;
+    p50: number;
+    p95: number;
+    p99: number;
 }
 
 /**
  * Get summary stats for a specific route (for performance reports).
  */
-function getRouteStats(method, route) {
+function getRouteStats(method: string, route: string): RouteStats | null {
     const key = `${method}:${route}`;
     const durations = requestDurations[key];
     if (!durations || durations.length === 0) {
@@ -223,7 +235,7 @@ function getRouteStats(method, route) {
 /**
  * Reset all metrics (useful for testing).
  */
-function resetMetrics() {
+function resetMetrics(): void {
     Object.keys(requestCounters).forEach(k => delete requestCounters[k]);
     Object.keys(requestDurations).forEach(k => delete requestDurations[k]);
 }

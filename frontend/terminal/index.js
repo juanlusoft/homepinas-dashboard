@@ -470,3 +470,7 @@ export function cleanup() {
 
     window.removeEventListener('resize', handleTerminalResize);
 }
+
+export async function render(container) {
+    await renderTerminalView(container);
+}

@@ -57,4 +57,8 @@ export function cleanup() {
     _csListeners = [];
 }
 
+export async function render(container) {
+    await renderCloudSyncView();
+}
+
 export { renderCloudSyncView };

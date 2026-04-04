@@ -15,15 +15,52 @@ const { sendViaEmail, sendViaTelegram } = require('./notify');
 
 const execFileAsync = promisify(execFile);
 
+// ═══════════════════════════════════════════════════════════════════════
+// TYPE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════════
+
+/** Represents a parsed error log entry. */
+interface ErrorEntry {
+  timestamp?: string;
+  message: string;
+  source?: string;
+  hash?: string;
+}
+
+interface ErrorHash {
+  hash: string;
+  ts: number;
+}
+
+interface ErrorConfig {
+  enabled?: boolean;
+  logSources?: string[];
+  channels?: string[];
+  cooldownMinutes?: number;
+  lastCheck?: string;
+  sentHashes?: ErrorHash[];
+  frequency?: string;
+}
+
+interface ScanResult {
+  errorsFound: number;
+  sent: boolean;
+}
+
+interface SendResult {
+  success: boolean;
+  error?: string;
+}
+
 // Frequency intervals in milliseconds
-const INTERVALS = {
+const INTERVALS: { [key: string]: number } = {
     immediate: 5 * 60 * 1000,   // 5 minutes
     hourly: 60 * 60 * 1000,     // 1 hour
     daily: 24 * 60 * 60 * 1000  // 24 hours
 };
 
 // journalctl unit mapping per source
-const SOURCE_UNITS = {
+const SOURCE_UNITS: { [key: string]: string | null } = {
     system: null,                // No unit filter = all system
     app: 'homepinas.service',
     auth: 'ssh.service',
@@ -31,7 +68,7 @@ const SOURCE_UNITS = {
 };
 
 // False-positive patterns to exclude
-const EXCLUDE_PATTERNS = [
+const EXCLUDE_PATTERNS: RegExp[] = [
     /error:\s*0/i,
     /0\s+error/i,
     /no\s+error/i,
@@ -40,21 +77,21 @@ const EXCLUDE_PATTERNS = [
     /errors?\s*=\s*0/i
 ];
 
-let monitorTimer = null;
+let monitorTimer: NodeJS.Timeout | null = null;
 
 /**
  * Format a Date as "YYYY-MM-DD HH:MM:SS" for journalctl --since
  */
-function formatForJournalctl(date) {
+function formatForJournalctl(date: string | number | Date): string {
     const d = new Date(date);
-    const pad = (n) => String(n).padStart(2, '0');
+    const pad = (n: number): string => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 /**
  * Compute a short hash for an error line (strips leading timestamp for dedup)
  */
-function hashError(line) {
+function hashError(line: string): string {
     // Remove ISO timestamp prefix (e.g., "Feb 17 12:34:56 hostname")
     const stripped = line.replace(/^[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+\S+\s+/, '');
     return crypto.createHash('md5').update(stripped).digest('hex').substring(0, 12);
@@ -62,11 +99,11 @@ function hashError(line) {
 
 /**
  * Scan a single log source for errors since a timestamp.
- * @param {string} source - system|app|auth|docker
- * @param {string|null} since - ISO timestamp or null
- * @returns {Promise<string[]>} Error lines found
+ * @param source - system|app|auth|docker
+ * @param since - ISO timestamp or null
+ * @returns Error lines found
  */
-async function scanSource(source, since) {
+async function scanSource(source: string, since: string | null): Promise<string[]> {
     const args = ['--no-pager', '--output=short-iso', '--priority=err..crit', '-n', '200'];
 
     if (since) {
@@ -88,13 +125,20 @@ async function scanSource(source, since) {
 
         if (!stdout || !stdout.trim()) return [];
 
-        return stdout.trim().split('\n').filter(line => {
+        return stdout.trim().split('\n').filter((line: string) => {
             // Filter out common false-positive patterns
             return !EXCLUDE_PATTERNS.some(pattern => pattern.test(line));
         });
-    } catch (err) {
-        // journalctl might fail on systems without systemd
-        log.error(`[ERROR-MONITOR] Failed to scan ${source}:`, err.message);
+    } catch (err: unknown) {
+        // Distinguish "journalctl not available" (non-systemd systems) from real failures
+        const msg = err instanceof Error ? err.message : String(err);
+        const isUnavailable = (err instanceof Error && 'code' in err && err.code === 'ENOENT') ||
+            (msg && (msg.includes('not found') || msg.includes('No such file')));
+        if (isUnavailable) {
+            log.debug(`[ERROR-MONITOR] journalctl not available on this system (${source}), skipping`);
+        } else {
+            log.error(`[ERROR-MONITOR] Failed to scan ${source}:`, msg);
+        }
         return [];
     }
 }
@@ -102,7 +146,7 @@ async function scanSource(source, since) {
 /**
  * Build HTML email body from collected errors.
  */
-function buildHtmlReport(errorsBySource, hostname) {
+function buildHtmlReport(errorsBySource: { [key: string]: string[] }, hostname: string): string {
     const timestamp = new Date().toLocaleString();
     let html = `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 700px; margin: 0 auto;">
@@ -133,7 +177,7 @@ function buildHtmlReport(errorsBySource, hostname) {
 /**
  * Build plain text for Telegram.
  */
-function buildTelegramReport(errorsBySource, hostname) {
+function buildTelegramReport(errorsBySource: { [key: string]: string[] }, hostname: string): string {
     const timestamp = new Date().toLocaleString();
     let text = `*HomePiNAS Error Report*\n${hostname} — ${timestamp}\n`;
 
@@ -152,18 +196,18 @@ function buildTelegramReport(errorsBySource, hostname) {
     return text;
 }
 
-function escapeHtml(str) {
+function escapeHtml(str: string): string {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
  * Main scan cycle.
- * @param {boolean} forceReport - Send report even if no errors (for testing)
- * @returns {Promise<{errorsFound: number, sent: boolean}>}
+ * @param forceReport - Send report even if no errors (for testing)
+ * @returns
  */
-async function runErrorScan(forceReport = false) {
+async function runErrorScan(forceReport: boolean = false): Promise<ScanResult> {
     const data = getData();
-    const config = data.notifications?.errorReporting;
+    const config: ErrorConfig | undefined = data.notifications?.errorReporting as ErrorConfig | undefined;
 
     if (!config?.enabled && !forceReport) {
         return { errorsFound: 0, sent: false };
@@ -171,20 +215,20 @@ async function runErrorScan(forceReport = false) {
 
     const sources = config?.logSources || ['system', 'app', 'docker'];
     const channels = config?.channels || ['email'];
-    const cooldown = (config?.cooldownMinutes || 30) * 60 * 1000;
+    const cooldown = ((config?.cooldownMinutes || 30) * 60 * 1000);
     const since = config?.lastCheck || null;
     const sentHashes = config?.sentHashes || [];
     const now = Date.now();
 
     // Scan all configured sources
-    const errorsBySource = {};
+    const errorsBySource: { [key: string]: string[] } = {};
     let totalNew = 0;
 
     for (const source of sources) {
         const lines = await scanSource(source, since);
-        const newLines = lines.filter(line => {
+        const newLines = lines.filter((line: string) => {
             const h = hashError(line);
-            const existing = sentHashes.find(e => e.hash === h);
+            const existing = sentHashes.find((e: ErrorHash) => e.hash === h);
             if (existing && (now - existing.ts) < cooldown) return false;
             return true;
         });
@@ -205,7 +249,7 @@ async function runErrorScan(forceReport = false) {
     }
 
     // Update sent hashes
-    const newHashes = [];
+    const newHashes: ErrorHash[] = [];
     for (const lines of Object.values(errorsBySource)) {
         for (const line of lines) {
             newHashes.push({ hash: hashError(line), ts: now });
@@ -230,7 +274,7 @@ async function runErrorScan(forceReport = false) {
     // Send via configured channels
     let sent = false;
     if (channels.includes('email')) {
-        const result = await sendViaEmail(subject, plainText, htmlReport);
+        const result: SendResult = await sendViaEmail(subject, plainText, htmlReport);
         if (result.success) sent = true;
         else log.error('[ERROR-MONITOR] Email send failed:', result.error);
     }
@@ -238,7 +282,7 @@ async function runErrorScan(forceReport = false) {
         const telegramText = totalNew > 0
             ? buildTelegramReport(errorsBySource, hostname)
             : `*HomePiNAS*: No errors found on ${hostname}. Test scan complete.`;
-        const result = await sendViaTelegram(telegramText);
+        const result: SendResult = await sendViaTelegram(telegramText);
         if (result.success) sent = true;
         else log.error('[ERROR-MONITOR] Telegram send failed:', result.error);
     }
@@ -253,25 +297,26 @@ async function runErrorScan(forceReport = false) {
 /**
  * Start the error monitoring interval.
  */
-function startErrorMonitor() {
+function startErrorMonitor(): void {
     stopErrorMonitor();
 
     const data = getData();
-    const config = data.notifications?.errorReporting;
+    const config: ErrorConfig | undefined = data.notifications?.errorReporting as ErrorConfig | undefined;
 
     if (!config?.enabled) {
         log.info('[ERROR-MONITOR] Disabled or not configured');
         return;
     }
 
-    const interval = INTERVALS[config.frequency] || INTERVALS.immediate;
+    const interval = INTERVALS[config.frequency || 'immediate'] || INTERVALS.immediate;
     log.info(`[ERROR-MONITOR] Started (frequency: ${config.frequency}, interval: ${interval / 60000} min)`);
 
     monitorTimer = setInterval(async () => {
         try {
             await runErrorScan();
-        } catch (err) {
-            log.error('[ERROR-MONITOR] Scan error:', err.message);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            log.error('[ERROR-MONITOR] Scan error:', msg);
         }
     }, interval);
 }
@@ -279,7 +324,7 @@ function startErrorMonitor() {
 /**
  * Stop the error monitoring interval.
  */
-function stopErrorMonitor() {
+function stopErrorMonitor(): void {
     if (monitorTimer) {
         clearInterval(monitorTimer);
         monitorTimer = null;

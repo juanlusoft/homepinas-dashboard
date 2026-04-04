@@ -1,0 +1,852 @@
+/* cloud-backup/style.css — extracted from style.css */
+/* Lines from source: 7483–8332 */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLOUD BACKUP STYLES (.cloudbackup-*)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cloudbackup-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cloudbackup-header-title {
+    color: var(--primary);
+    margin: 0;
+}
+
+.cloudbackup-header-subtitle {
+    color: var(--text-dim);
+    margin: 5px 0 0;
+}
+
+.cloudbackup-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+}
+
+.cloudbackup-install-card {
+    text-align: center;
+    padding: 40px;
+}
+
+.cloudbackup-install-title {
+    margin-bottom: 15px;
+}
+
+.cloudbackup-install-description {
+    color: var(--text-dim);
+    margin-bottom: 20px;
+}
+
+.cloudbackup-install-btn {
+    padding: 12px 24px;
+}
+
+.cloudbackup-version-badge {
+    color: #10b981;
+}
+
+.cloudbackup-warning-badge {
+    color: #f59e0b;
+}
+
+.cloudbackup-remotes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cloudbackup-remotes-header-title {
+    margin: 0;
+}
+
+.cloudbackup-remotes-add-btn {
+    padding: 8px 16px;
+}
+
+.cloudbackup-remote-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cloudbackup-remote-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cloudbackup-remote-icon {
+    font-size: 1.8rem;
+}
+
+.cloudbackup-remote-name {
+    font-weight: 600;
+}
+
+.cloudbackup-remote-type {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.cloudbackup-remote-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cloudbackup-btn-browse {
+    background: #6366f1;
+}
+
+.cloudbackup-btn-sync {
+    background: #10b981;
+}
+
+.cloudbackup-btn-delete {
+    background: #ef4444;
+}
+
+.cloudbackup-empty-state {
+    text-align: center;
+    padding: 40px;
+}
+
+.cloudbackup-empty-title {
+    margin-bottom: 15px;
+}
+
+.cloudbackup-empty-description {
+    color: var(--text-dim);
+    margin-bottom: 20px;
+}
+
+.cloudbackup-empty-add-btn {
+    padding: 12px 24px;
+}
+
+.cloudbackup-active-syncs-card {
+    margin-bottom: 20px;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.cloudbackup-active-syncs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cloudbackup-active-syncs-title {
+    margin: 0;
+    color: #10b981;
+}
+
+.cloudbackup-active-syncs-refresh-label {
+    font-size: 0.8rem;
+    color: #a0a0b0;
+}
+
+.cloudbackup-active-sync-item {
+    padding: 15px;
+    background: rgba(16, 185, 129, 0.05);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.cloudbackup-active-sync-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cloudbackup-active-sync-paths {
+    overflow: hidden;
+}
+
+.cloudbackup-active-sync-source {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cloudbackup-active-sync-dest {
+    font-size: 0.8rem;
+    color: #a0a0b0;
+}
+
+.cloudbackup-active-sync-percent {
+    color: #10b981;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.cloudbackup-active-sync-progress-bg {
+    height: 6px;
+    background: #2d2d44;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.cloudbackup-active-sync-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #6366f1);
+    transition: width 0.5s ease;
+}
+
+.cloudbackup-schedules-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cloudbackup-schedules-title {
+    margin: 0;
+}
+
+.cloudbackup-schedule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cloudbackup-schedule-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.cloudbackup-schedule-name {
+    font-weight: 500;
+}
+
+.cloudbackup-schedule-paths {
+    font-size: 0.8rem;
+    color: #a0a0b0;
+}
+
+.cloudbackup-schedule-config {
+    font-size: 0.75rem;
+    color: #6366f1;
+    margin-top: 4px;
+}
+
+.cloudbackup-schedule-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cloudbackup-schedule-btn-enabled {
+    background: #10b981;
+}
+
+.cloudbackup-schedule-btn-disabled {
+    background: #4a4a6a;
+}
+
+.cloudbackup-schedules-empty {
+    text-align: center;
+    padding: 20px;
+    color: #a0a0b0;
+}
+
+.cloudbackup-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cloudbackup-history-title {
+    margin: 0;
+}
+
+.cloudbackup-history-clear-btn {
+    background: #4a4a6a;
+}
+
+.cloudbackup-history-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.cloudbackup-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.cloudbackup-history-item-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.cloudbackup-history-item-path {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cloudbackup-history-item-meta {
+    font-size: 0.75rem;
+    color: #a0a0b0;
+}
+
+.cloudbackup-history-item-icon {
+    font-size: 1.2rem;
+}
+
+.cloudbackup-history-empty {
+    text-align: center;
+    padding: 20px;
+    color: #a0a0b0;
+}
+
+.cloudbackup-error {
+    color: #ef4444;
+    padding: 20px;
+}
+
+.cloudbackup-install-progress-card {
+    text-align: center;
+    padding: 40px;
+}
+
+.cloudbackup-install-progress-title {
+    margin-bottom: 20px;
+    color: var(--primary);
+}
+
+.cloudbackup-install-progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.cloudbackup-install-progress-text {
+    color: #a0a0b0;
+}
+
+.cloudbackup-install-progress-percent {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.cloudbackup-install-progress-bg {
+    height: 8px;
+    background: #2d2d44;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.cloudbackup-install-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #6366f1);
+    transition: width 0.5s ease;
+}
+
+.cloudbackup-install-steps {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.cloudbackup-install-step-active {
+    color: #10b981;
+}
+
+.cloudbackup-install-step-inactive {
+    color: #4a4a6a;
+}
+
+.cloudbackup-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+}
+
+.cloudbackup-modal-overlay-dark {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.cloudbackup-modal-container {
+    background: #1a1a2e;
+    border: 1px solid #3d3d5c;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+.cloudbackup-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #3d3d5c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cloudbackup-modal-title {
+    margin: 0;
+    color: #10b981;
+}
+
+.cloudbackup-modal-close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.cloudbackup-modal-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 60vh;
+}
+
+.cloudbackup-modal-description {
+    color: #a0a0b0;
+    margin-bottom: 20px;
+}
+
+.cloudbackup-providers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.cloudbackup-provider-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px 15px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cloudbackup-provider-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.cloudbackup-provider-name {
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.cloudbackup-oauth-modal {
+    background: #1a1a2e;
+    border: 1px solid #3d3d5c;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 500px;
+    padding: 25px;
+}
+
+.cloudbackup-oauth-title {
+    color: #10b981;
+    margin-bottom: 20px;
+}
+
+.cloudbackup-oauth-instructions {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.cloudbackup-oauth-instructions-text {
+    white-space: pre-wrap;
+    color: #a0a0b0;
+    font-size: 0.9rem;
+}
+
+.cloudbackup-form-group {
+    margin-bottom: 15px;
+}
+
+.cloudbackup-form-label {
+    color: #fff;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.cloudbackup-form-input {
+    width: 100%;
+    padding: 10px;
+    background: #2d2d44;
+    border: 1px solid #3d3d5c;
+    border-radius: 6px;
+    color: #fff;
+}
+
+.cloudbackup-form-textarea {
+    width: 100%;
+    padding: 10px;
+    background: #2d2d44;
+    border: 1px solid #3d3d5c;
+    border-radius: 6px;
+    color: #fff;
+    resize: vertical;
+}
+
+.cloudbackup-form-select {
+    width: 100%;
+    padding: 10px;
+    background: #2d2d44;
+    border: 1px solid #3d3d5c;
+    border-radius: 6px;
+    color: #fff;
+}
+
+.cloudbackup-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.cloudbackup-btn-cancel {
+    padding: 10px 20px;
+    background: #4a4a6a;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cloudbackup-btn-save {
+    padding: 10px 20px;
+    background: #10b981;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cloudbackup-browser-modal {
+    background: #1a1a2e;
+    border: 1px solid #3d3d5c;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 800px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.cloudbackup-browser-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #3d3d5c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cloudbackup-browser-title {
+    margin: 0;
+    color: #10b981;
+}
+
+.cloudbackup-browser-path {
+    font-size: 0.85rem;
+    color: #a0a0b0;
+    margin-top: 4px;
+}
+
+.cloudbackup-browser-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.cloudbackup-browser-toolbar {
+    padding: 10px 20px;
+    border-bottom: 1px solid #3d3d5c;
+    display: flex;
+    gap: 10px;
+}
+
+.cloudbackup-browser-btn {
+    padding: 8px 16px;
+    background: #4a4a6a;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cloudbackup-browser-btn-disabled {
+    opacity: 0.5;
+    padding: 8px 16px;
+    background: #4a4a6a;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+}
+
+.cloudbackup-browser-btn-sync {
+    padding: 8px 16px;
+    background: #10b981;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cloudbackup-browser-files {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 20px;
+}
+
+.cloudbackup-browser-loading {
+    text-align: center;
+    padding: 40px;
+    color: #a0a0b0;
+}
+
+.cloudbackup-browser-empty {
+    text-align: center;
+    padding: 40px;
+    color: #a0a0b0;
+}
+
+.cloudbackup-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cloudbackup-file-item-clickable {
+    cursor: pointer;
+}
+
+.cloudbackup-file-item-default {
+    cursor: default;
+}
+
+.cloudbackup-file-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.cloudbackup-file-icon {
+    font-size: 1.4rem;
+}
+
+.cloudbackup-file-details {
+    overflow: hidden;
+}
+
+.cloudbackup-file-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cloudbackup-file-meta {
+    font-size: 0.8rem;
+    color: #a0a0b0;
+}
+
+.cloudbackup-file-download-btn {
+    padding: 6px 12px;
+    background: #6366f1;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.cloudbackup-sync-wizard {
+    background: #1a1a2e;
+    border: 1px solid #3d3d5c;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 600px;
+    padding: 25px;
+}
+
+.cloudbackup-sync-wizard-title {
+    color: #10b981;
+    margin-bottom: 20px;
+}
+
+.cloudbackup-sync-field {
+    margin-bottom: 20px;
+}
+
+.cloudbackup-sync-label {
+    color: #fff;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.cloudbackup-sync-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.cloudbackup-sync-input {
+    flex: 1;
+    padding: 10px;
+    background: #2d2d44;
+    border: 1px solid #3d3d5c;
+    border-radius: 6px;
+    color: #fff;
+}
+
+.cloudbackup-sync-browse-btn {
+    padding: 10px 15px;
+    background: #6366f1;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cloudbackup-sync-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.cloudbackup-sync-btn-cancel {
+    padding: 12px 24px;
+    background: #4a4a6a;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cloudbackup-sync-btn-start {
+    padding: 12px 24px;
+    background: #10b981;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.cloudbackup-progress-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #1a1a2e;
+    border: 1px solid #3d3d5c;
+    border-radius: 12px;
+    padding: 15px 20px;
+    z-index: 100001;
+    width: 320px;
+}
+
+.cloudbackup-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cloudbackup-progress-title {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.cloudbackup-progress-close {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.cloudbackup-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.cloudbackup-progress-text {
+    color: #a0a0b0;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 240px;
+}
+
+.cloudbackup-progress-percent {
+    color: #10b981;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.cloudbackup-progress-bg {
+    height: 6px;
+    background: #2d2d44;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.cloudbackup-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #6366f1);
+    transition: width 0.5s ease;
+}
+
+.cloudbackup-modal-actions-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.cloudbackup-card-margin {
+    margin-bottom: 20px;
+}

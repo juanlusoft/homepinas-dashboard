@@ -1,0 +1,254 @@
+/* backup/style.css — extracted from style.css */
+/* Lines from source: 10320–10451, 12521–12640 */
+
+/* Backups */
+.misc-backup-loading {
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+.misc-backup-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+.misc-backup-job-name {
+    font-weight: 600;
+}
+
+.misc-backup-job-details {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.misc-backup-job-schedule {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.misc-backup-error {
+    padding: 20px;
+    color: #ef4444;
+}
+
+.misc-backup-modal {
+    max-width: 500px;
+    width: 90%;
+}
+
+.misc-backup-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.misc-backup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.misc-backup-type-select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+.misc-backup-schedule-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.misc-backup-schedule-label {
+    margin: 0;
+}
+
+.misc-backup-cron-input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+/* Scheduled Tasks */
+.misc-task-loading {
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+.misc-task-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+.misc-task-name {
+    font-weight: 600;
+}
+
+.misc-task-command {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-family: monospace;
+}
+
+.misc-task-schedule {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.misc-task-error {
+    padding: 20px;
+    color: #ef4444;
+}
+
+.misc-task-modal {
+    max-width: 450px;
+    width: 90%;
+}
+
+.misc-task-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.misc-task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.misc-task-hint {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0 4px;
+}
+
+/* Backup Jobs Section (Misc) */
+.misc-backup-loading {
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+.misc-backup-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+.misc-backup-error {
+    padding: 20px;
+    color: #ef4444;
+}
+
+.misc-backup-type {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.misc-backup-schedule {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.misc-backup-modal-content {
+    max-width: 500px;
+    width: 90%;
+}
+
+.misc-backup-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.misc-backup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.misc-backup-type-select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+.misc-backup-cron-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.misc-backup-cron-input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+/* Task Scheduler Section (Misc) */
+.misc-task-loading {
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+.misc-task-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+.misc-task-error {
+    padding: 20px;
+    color: #ef4444;
+}
+
+.misc-task-command {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-family: monospace;
+}
+
+.misc-task-schedule {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.misc-task-modal-content {
+    max-width: 450px;
+    width: 90%;
+}
+
+.misc-task-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.misc-task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.misc-task-help {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0 4px;
+}

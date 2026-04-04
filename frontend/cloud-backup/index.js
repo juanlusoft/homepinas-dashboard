@@ -16,9 +16,9 @@ export function cleanup() {
 async function renderCloudBackupView() {
     const dashboardContent = document.getElementById('dashboard-content');
     if (!dashboardContent) return;
-    
+
     dashboardContent.innerHTML = '<div class="glass-card"><h3>Cloud Backup</h3><p>Loading...</p></div>';
-    
+
     try {
         const response = await authFetch('/api/cloud-backup');
         if (response.ok) {
@@ -34,6 +34,10 @@ async function renderCloudBackupView() {
     } catch (error) {
         showNotification('Error loading Cloud Backup', 'error');
     }
+}
+
+export async function render(container) {
+    await renderCloudBackupView();
 }
 
 export { renderCloudBackupView };

@@ -21,8 +21,8 @@ interface Logger {
     error(...args: unknown[]): void;
 }
 
-const LEVELS = { debug: 0, info: 1, warn: 2, error: 3 };
-const currentLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS.info;
+const LEVELS: Record<string, number> = { debug: 0, info: 1, warn: 2, error: 3 };
+const currentLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS['info'];
 const isProduction = process.env.NODE_ENV === 'production';
 
 /**

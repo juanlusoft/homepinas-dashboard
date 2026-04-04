@@ -6,7 +6,7 @@
  * Token-based CSRF protection for state-changing requests
  */
 
-import type { RequestHandler } from 'express';
+import type { RequestHandler } from 'express-serve-static-core';
 
 const crypto = require('crypto');
 const {

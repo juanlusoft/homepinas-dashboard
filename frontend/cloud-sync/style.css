@@ -1,0 +1,99 @@
+/* cloud-sync/style.css — extracted from style.css */
+/* Lines from source: 6378–6473 */
+
+/* Cloud Sync section */
+.cloudsync-card { margin-bottom: 20px; }
+.cloudsync-title { color: var(--primary); }
+.cloudsync-subtitle { margin: 15px 0; }
+.cloudsync-install-btn { background: var(--primary); color: #000; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.cloudsync-status-row { display: flex; align-items: center; gap: 15px; margin: 15px 0; }
+.cloudsync-status-row--wide { display: flex; align-items: center; gap: 20px; margin: 15px 0; flex-wrap: wrap; }
+.cloudsync-status-warning { color: #f59e0b; }
+.cloudsync-status-active { color: #10b981; }
+.cloudsync-status-info { color: var(--text-dim); }
+.cloudsync-start-btn { background: #10b981; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; }
+.cloudsync-stop-btn { background: #ef4444; color: #fff; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.cloudsync-error-text { color: #ef4444; }
+.cloudsync-link-title { color: var(--secondary); margin-bottom: 15px; }
+.cloudsync-link-desc { color: var(--text-dim); margin-bottom: 10px; }
+.cloudsync-link-row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+.cloudsync-qr-box { background: #fff; padding: 10px; border-radius: 8px; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; }
+.cloudsync-qr-placeholder { color: #666; font-size: 0.8rem; }
+.cloudsync-id-field { flex: 1; min-width: 200px; }
+.cloudsync-id-label { color: var(--text-dim); font-size: 0.85rem; }
+.cloudsync-id-row { display: flex; gap: 10px; margin-top: 5px; }
+.cloudsync-id-input { flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: var(--text); font-family: monospace; font-size: 0.75rem; }
+.cloudsync-copy-btn { padding: 10px 15px; background: var(--primary); color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.cloudsync-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.cloudsync-section-title { color: var(--secondary); }
+.cloudsync-add-folder-btn { padding: 8px 16px; background: #a78bfa; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.cloudsync-add-device-btn { padding: 8px 16px; background: #22d3ee; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.cloudsync-empty-text { color: var(--text-dim); }
+.cloudsync-folder-card { padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
+.cloudsync-folder-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.cloudsync-folder-info { flex: 1; }
+.cloudsync-folder-name { font-weight: 600; color: var(--text); font-size: 1rem; }
+.cloudsync-folder-path { font-size: 0.8rem; color: var(--text-dim); margin-top: 3px; font-family: monospace; }
+.cloudsync-folder-actions { display: flex; gap: 6px; }
+.cloudsync-action-btn { padding: 6px 10px; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.cloudsync-action-btn--pause { background: #f59e0b; }
+.cloudsync-action-btn--resume { background: #10b981; }
+.cloudsync-action-btn--browse { background: #8b5cf6; }
+.cloudsync-action-btn--share { background: #3b82f6; }
+.cloudsync-action-btn--delete { background: #ef4444; }
+.cloudsync-action-btn--rename { background: #6b7280; }
+.cloudsync-sync-status { margin-top: 10px; }
+.cloudsync-sync-status-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+.cloudsync-sync-paused { color: #f59e0b; }
+.cloudsync-sync-active { color: #10b981; }
+.cloudsync-sync-devices { color: var(--text-dim); }
+.cloudsync-progress-container { margin-top: 8px; display: none; }
+.cloudsync-progress-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
+.cloudsync-progress-track { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.cloudsync-progress-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+.cloudsync-device-card { padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 12px; }
+.cloudsync-device-card--connected { border: 1px solid rgba(16,185,129,0.3); }
+.cloudsync-device-card--disconnected { border: 1px solid rgba(255,255,255,0.05); }
+.cloudsync-device-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.cloudsync-device-info { flex: 1; }
+.cloudsync-device-name-row { display: flex; align-items: center; gap: 8px; }
+.cloudsync-device-icon { font-size: 1.2rem; }
+.cloudsync-device-name { font-weight: 600; color: var(--text); font-size: 1rem; }
+.cloudsync-device-id { font-size: 0.75rem; color: var(--text-dim); font-family: monospace; margin-top: 6px; word-break: break-all; }
+.cloudsync-device-status-row { display: flex; gap: 15px; margin-top: 8px; font-size: 0.8rem; }
+.cloudsync-device-connected { color: #10b981; }
+.cloudsync-device-address { color: var(--text-dim); }
+.cloudsync-device-disconnected { color: #6b7280; }
+.cloudsync-device-actions { display: flex; gap: 6px; }
+
+/* Cloud Sync modal overlays */
+.cloudsync-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 99999; }
+.cloudsync-modal-content { background: var(--bg-card, #1a1a2e); padding: 25px; border-radius: 12px; width: 90%; }
+.cloudsync-modal-content--sm { max-width: 400px; }
+.cloudsync-modal-content--md { max-width: 450px; }
+.cloudsync-modal-content--lg { max-width: 500px; }
+.cloudsync-modal-title { margin-bottom: 20px; }
+.cloudsync-modal-title--blue { color: #22d3ee; }
+.cloudsync-modal-title--purple { color: #a78bfa; }
+.cloudsync-modal-desc { color: #9ca3af; margin-bottom: 15px; font-size: 0.9rem; }
+.cloudsync-modal-field { margin-bottom: 15px; }
+.cloudsync-modal-field--last { margin-bottom: 20px; }
+.cloudsync-modal-label { color: #9ca3af; font-size: 0.9rem; }
+.cloudsync-modal-input { width: 100%; padding: 12px; margin-top: 5px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: var(--text, #fff); }
+.cloudsync-modal-input--mono { font-family: monospace; font-size: 0.8rem; }
+.cloudsync-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.cloudsync-modal-actions--full { display: flex; gap: 12px; margin-top: 20px; }
+.cloudsync-btn-cancel { padding: 10px 20px; background: #4b5563; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.cloudsync-btn-cancel--full { flex: 1; padding: 12px; background: #4b5563; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+.cloudsync-btn-save { padding: 10px 20px; background: #a78bfa; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.cloudsync-btn-save--green { background: #22c55e; color: #fff; }
+.cloudsync-btn-save--full { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.cloudsync-btn-add-device { padding: 10px 20px; background: #22d3ee; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.cloudsync-share-list { max-height: 300px; overflow-y: auto; }
+.cloudsync-share-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+.cloudsync-share-checkbox { width: 18px; height: 18px; cursor: pointer; }
+.cloudsync-share-name { color: #e5e7eb; font-weight: 500; }
+.cloudsync-share-id { color: #9ca3af; font-size: 0.8rem; }
+.cloudsync-qr-fallback { background: var(--bg-card); border: 2px dashed var(--border); border-radius: 10px; padding: 15px; text-align: center; }
+.cloudsync-qr-fallback-icon { font-size: 2rem; }
+.cloudsync-qr-fallback-text { font-size: 0.75rem; color: var(--text-dim); margin-top: 5px; }

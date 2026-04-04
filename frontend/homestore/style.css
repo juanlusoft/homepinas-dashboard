@@ -1,0 +1,144 @@
+/* homestore/style.css — extracted from style.css */
+/* Lines from source: 6475–6616 */
+
+/* ═══════════════════════════════════════════════════════════════
+   HOMESTORE — .homestore-* classes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Layout & Header */
+.homestore-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; }
+.homestore-status { display: flex; gap: 15px; align-items: center; }
+.homestore-description { color: var(--text-secondary); margin-bottom: 20px; }
+.homestore-categories { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.homestore-apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+/* Status badges */
+.homestore-status-arch { color: var(--text-secondary); }
+.homestore-status-docker-active { color: #10b981; }
+.homestore-status-docker-error { color: #ef4444; }
+
+/* Category buttons */
+.homestore-cat-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; }
+.homestore-cat-btn.active { background: var(--primary); color: #000; }
+
+/* Empty / Error states */
+.homestore-empty { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary); }
+.homestore-empty-icon { font-size: 48px; margin-bottom: 20px; }
+.homestore-error { grid-column: 1 / -1; text-align: center; padding: 40px; color: #ef4444; }
+.homestore-go-docker-btn { margin-top: 20px; background: var(--primary); color: #000; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
+
+/* App cards */
+.homestore-card { background: rgba(30, 30, 50, 0.95); border: 2px solid rgba(100, 100, 140, 0.5); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); color: #fff; }
+.homestore-card--incompatible { border-color: #f59e0b; opacity: 0.7; }
+.homestore-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.homestore-card-icon-row { display: flex; align-items: center; gap: 12px; }
+.homestore-card-icon { width: 48px; height: 48px; border-radius: 8px; }
+.homestore-card-icon-emoji { font-size: 2rem; }
+.homestore-card-title { margin: 0; font-size: 1.1rem; color: #fff; }
+.homestore-card-category { color: rgba(255,255,255,0.7); font-size: 0.85rem; }
+.homestore-card-desc { color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 12px; line-height: 1.4; }
+.homestore-arch-badges { margin-bottom: 12px; }
+.homestore-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Compatibility warning */
+.homestore-compat-warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 0.85rem; color: #92400e; }
+
+/* Status badges (running/stopped) */
+.homestore-status-badge { padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; color: #fff; }
+.homestore-status-badge--running { background: #10b981; }
+.homestore-status-badge--stopped { background: #6b7280; }
+
+/* Action buttons */
+.homestore-open-btn { background: var(--primary); color: #000; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+.homestore-stop-btn { background: #6b7280; color: #fff; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
+.homestore-logs-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.homestore-start-btn { background: #10b981; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+.homestore-uninstall-btn { background: #ef4444; color: #fff; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
+.homestore-update-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.homestore-install-btn { background: var(--primary); color: #000; padding: 8px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+.homestore-docs-link { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; text-decoration: none; display: inline-block; }
+.homestore-unavailable-btn { background: #6b7280; color: #fff; padding: 8px 20px; border: none; border-radius: 6px; cursor: not-allowed; font-weight: 500; opacity: 0.6; }
+
+/* Architecture badges */
+.homestore-arch-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid var(--border); }
+.homestore-arch-badge--current { background: #10b981; color: #fff; }
+.homestore-arch-badge--other { background: var(--bg-card); color: var(--text-secondary); }
+
+/* Config info section */
+.homestore-config-volume-path { font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); }
+.homestore-config-port-info { font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); }
+.homestore-config-info { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.8rem; }
+.homestore-config-info-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.homestore-config-volume-info { flex: 1; line-height: 1.6; }
+
+/* Config modal */
+.homestore-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); display: flex; align-items: center; justify-content: center; z-index: 100000; backdrop-filter: blur(4px); }
+.homestore-modal-container { background: var(--bg-card, #1a1a2e); border: 1px solid var(--border, #3a3a5e); border-radius: 16px; width: 90%; max-width: 600px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+.homestore-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border, #3a3a5e); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card, #1a1a2e); }
+.homestore-modal-header-content { display: flex; align-items: center; gap: 12px; }
+.homestore-modal-header-icon { width: 48px; height: 48px; border-radius: 8px; }
+.homestore-modal-header-icon-emoji { font-size: 2rem; }
+.homestore-modal-title { margin: 0; font-size: 1.2rem; color: var(--text); }
+.homestore-modal-subtitle { color: var(--text-secondary); font-size: 0.85rem; }
+.homestore-modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); padding: 4px 8px; }
+.homestore-modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+
+/* Previous config alert */
+.homestore-prev-config-alert { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.homestore-prev-config-icon { font-size: 1.2rem; }
+.homestore-prev-config-title { color: #22c55e; font-weight: 500; }
+.homestore-prev-config-desc { color: var(--text-secondary); font-size: 0.85rem; }
+
+/* Config form sections */
+.homestore-config-section { margin-bottom: 24px; }
+.homestore-config-section-title { color: var(--primary); margin: 0 0 16px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.homestore-config-label { color: var(--text-secondary); font-size: 0.85rem; display: block; margin-bottom: 6px; }
+.homestore-config-label-code { font-size: 0.75rem; opacity: 0.7; }
+
+/* Config volume/port/env inputs */
+.homestore-config-volume { margin-bottom: 16px; }
+.homestore-config-input-row { display: flex; gap: 8px; }
+.homestore-volume-input { flex: 1; padding: 10px 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--border, #3a3a5e); border-radius: 8px; color: var(--text, #fff); font-family: monospace; font-size: 0.9rem; }
+.homestore-browse-btn { padding: 10px 14px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--text); }
+.homestore-config-port { margin-bottom: 12px; }
+.homestore-port-input-row { display: flex; align-items: center; gap: 8px; }
+.homestore-port-input { width: 100px; padding: 10px 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--border, #3a3a5e); border-radius: 8px; color: var(--text, #fff); font-family: monospace; }
+.homestore-port-arrow { color: var(--text-secondary); }
+.homestore-config-env { margin-bottom: 12px; }
+.homestore-env-input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--border, #3a3a5e); border-radius: 8px; color: #fff !important; font-family: monospace; font-size: 0.9rem; }
+.homestore-env-input::placeholder { color: rgba(255,255,255,0.4); }
+.homestore-port-input { color: #fff !important; }
+.homestore-port-input::placeholder { color: rgba(255,255,255,0.4); }
+.homestore-volume-input { color: #fff !important; }
+.homestore-volume-input::placeholder { color: rgba(255,255,255,0.4); }
+
+/* Config modal footer */
+.homestore-modal-footer { padding: 16px 24px; border-top: 1px solid var(--border, #3a3a5e); display: flex; justify-content: flex-end; gap: 12px; background: var(--bg-card, #1a1a2e); }
+.homestore-cancel-btn { padding: 10px 24px; background: var(--bg-hover, #4b5563); color: var(--text, #fff); border: none; border-radius: 8px; cursor: pointer; }
+.homestore-install-modal-btn { padding: 10px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+/* Folder picker modal */
+.homestore-folder-picker-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100001; }
+.homestore-folder-picker-container { background: var(--bg-card, #1a1a2e); border: 1px solid var(--border, #3a3a5e); border-radius: 12px; width: 90%; max-width: 500px; max-height: 70vh; display: flex; flex-direction: column; overflow: hidden; }
+.homestore-folder-picker-header { padding: 16px 20px; border-bottom: 1px solid var(--border, #3a3a5e); display: flex; justify-content: space-between; align-items: center; }
+.homestore-folder-picker-title { margin: 0; color: var(--text); }
+.homestore-folder-picker-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+.homestore-folder-picker-body { padding: 16px 20px; flex: 1; overflow-y: auto; }
+.homestore-folder-picker-path-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.homestore-folder-picker-path-input { flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--border, #3a3a5e); border-radius: 6px; color: var(--text, #fff); font-family: monospace; font-size: 0.85rem; }
+.homestore-folder-picker-go-btn { padding: 8px 16px; background: var(--primary); color: #000; border: none; border-radius: 6px; cursor: pointer; }
+.homestore-folder-picker-list { max-height: 300px; overflow-y: auto; }
+.homestore-folder-picker-loading { text-align: center; padding: 20px; color: var(--text-secondary); }
+.homestore-folder-picker-error { text-align: center; padding: 20px; color: #ef4444; }
+.homestore-folder-picker-empty { text-align: center; padding: 20px; color: var(--text-secondary); }
+.homestore-folder-picker-footer { padding: 12px 20px; border-top: 1px solid var(--border, #3a3a5e); display: flex; justify-content: flex-end; gap: 10px; }
+.homestore-folder-picker-cancel { padding: 8px 16px; background: var(--bg-hover, #4b5563); color: var(--text, #fff); border: none; border-radius: 6px; cursor: pointer; }
+.homestore-folder-picker-select { padding: 8px 16px; background: var(--primary); color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+/* Logs modal */
+.homestore-logs-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100000; }
+.homestore-logs-modal-container { background: var(--bg-card, #1a1a2e); border: 1px solid var(--border, #3a3a5e); border-radius: 12px; width: 90%; max-width: 800px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+.homestore-logs-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border, #3a3a5e); display: flex; justify-content: space-between; align-items: center; }
+.homestore-logs-modal-title { margin: 0; color: var(--text); }
+.homestore-logs-modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+.homestore-logs-content { margin: 0; padding: 20px; overflow: auto; flex: 1; font-size: 0.8rem; color: #10b981; background: #0a0a0a; white-space: pre-wrap; }

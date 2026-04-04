@@ -29,7 +29,7 @@ function logSecurityEvent(event: string, user: Record<string, unknown>, ipOrMeta
     if (typeof ipOrMeta === 'string') {
         ip = ipOrMeta;
     } else if (ipOrMeta && typeof ipOrMeta === 'object') {
-        ip = (ipOrMeta as Record<string, unknown>).ip || '-';
+        ip = ((ipOrMeta as Record<string, unknown>).ip as string | undefined) || '-';
         meta = { ...ipOrMeta as Record<string, unknown> };
         delete meta.ip;
     }

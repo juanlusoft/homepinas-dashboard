@@ -1,0 +1,472 @@
+/* docker/style.css — extracted from style.css */
+/* Lines from source: 723–765, 2247–2351, 2561–2676, 9636–9844 */
+
+/* Docker Cards */
+.docker-card {
+    padding: 24px;
+    position: relative;
+}
+
+.docker-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-running {
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+}
+
+.status-stopped {
+    background: #ef4444;
+}
+
+.docker-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--text-dark);
+    cursor: pointer;
+}
+
+.btn-sm:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+/* Docker Compose Deploy Progress */
+.deploy-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+}
+
+.deploy-step .step-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+.deploy-step .step-text {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.deploy-step.active {
+    background: rgba(99, 102, 241, 0.15);
+    border-left: 3px solid #6366f1;
+}
+
+.deploy-step.active .step-icon {
+    animation: pulse 1s infinite;
+}
+
+.deploy-step.done {
+    background: rgba(16, 185, 129, 0.15);
+    border-left: 3px solid #10b981;
+}
+
+.deploy-step.done .step-icon::after {
+    content: "✅";
+}
+
+.deploy-step.done .step-icon {
+    font-size: 0;
+}
+
+.deploy-step.error {
+    background: rgba(239, 68, 68, 0.15);
+    border-left: 3px solid #ef4444;
+}
+
+.deploy-step.error .step-icon::after {
+    content: "❌";
+}
+
+.deploy-step.error .step-icon {
+    font-size: 0;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* User Info & Logout */
+.user-info {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--sidebar-text);
+}
+
+.user-info .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+#username-display {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.logout-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: none;
+    color: #ef4444;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-left: 10px;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 0.4);
+    transform: scale(1.1);
+}
+/* Docker Enhanced Styles */
+.docker-ports {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.docker-port-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: #a5b4fc;
+}
+
+.docker-port-badge .port-public {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.docker-port-badge .port-arrow {
+    color: var(--text-dim);
+}
+
+.docker-port-badge .port-private {
+    color: #6366f1;
+}
+
+.docker-notes {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.docker-notes-input {
+    width: 100%;
+    min-height: 60px;
+    background: transparent;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 8px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.docker-notes-input::placeholder {
+    color: var(--text-dim);
+}
+
+.docker-notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.docker-actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.docker-action-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.docker-action-btn.logs {
+    background: rgba(99, 102, 241, 0.2);
+    color: #6366f1;
+}
+
+.docker-action-btn.logs:hover {
+    background: rgba(99, 102, 241, 0.3);
+}
+
+.docker-action-btn.web {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.docker-action-btn.web:hover {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.docker-action-btn.edit {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.docker-action-btn.edit:hover {
+    background: rgba(245, 158, 11, 0.3);
+}
+/* Docker Section */
+.docker-empty-title {
+    color: var(--text-dim);
+}
+
+.docker-empty-subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.docker-stat-cell {
+    flex: 1;
+    text-align: center;
+}
+
+.docker-stat-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.docker-stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.docker-stat-value-cpu-warn {
+    color: #f59e0b;
+}
+
+.docker-stat-value-cpu-ok {
+    color: #10b981;
+}
+
+.docker-stat-value-ram {
+    color: #6366f1;
+}
+
+.docker-compose-modal {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.docker-compose-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.docker-compose-title {
+    margin: 0;
+}
+
+.docker-compose-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.docker-compose-input-group {
+    margin-bottom: 15px;
+}
+
+.docker-compose-label-wrap {
+    margin-bottom: 15px;
+}
+
+.docker-compose-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-dim);
+}
+
+.docker-compose-file-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.docker-compose-file-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: var(--bg-hover);
+    color: var(--text);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.docker-compose-file-input {
+    display: none;
+}
+
+.docker-compose-textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.docker-compose-save-btn {
+    flex: 1;
+    padding: 12px;
+}
+
+.docker-compose-save-run-btn {
+    flex: 1;
+    padding: 12px;
+    background: #10b981;
+}
+
+.docker-deploy-title {
+    margin: 0 0 20px 0;
+}
+
+.docker-deploy-progress-wrap {
+    margin: 20px 0;
+}
+
+.docker-deploy-progress-bg {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.docker-deploy-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #10b981);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.docker-deploy-status {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.docker-deploy-log {
+    display: none;
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.docker-deploy-actions {
+    display: none;
+    text-align: center;
+}
+
+.docker-deploy-close {
+    padding: 12px 30px;
+}
+
+.docker-edit-modal {
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.docker-edit-padding {
+    padding: 20px;
+}
+
+.docker-edit-textarea {
+    width: 100%;
+    min-height: 400px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.docker-edit-footer {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+}
+
+.docker-edit-cancel {
+    background: var(--text-dim);
+}
+
+.docker-edit-save-run {
+    background: #10b981;
+}

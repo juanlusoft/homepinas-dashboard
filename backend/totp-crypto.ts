@@ -17,6 +17,15 @@ const fs = require('fs');
 const path = require('path');
 const log = require('./logger');
 
+/**
+ * Represents a TOTP secret encrypted at rest.
+ * Format: "enc:v1:<salt_hex>:<iv_hex>:<authTag_hex>:<ciphertext_hex>"
+ */
+interface EncryptedSecret {
+    /** The full encrypted string as stored in data.json */
+    value: string;
+}
+
 const SERVER_SECRET_PATH = path.join(__dirname, '..', 'config', '.totp-server-key');
 const PBKDF2_ITERATIONS = 100000;
 const KEY_LENGTH = 32; // 256 bits
@@ -27,14 +36,27 @@ const ENCRYPTED_PREFIX = 'enc:v1:';
 /**
  * Get or create the server-side secret used for TOTP encryption.
  * This secret is stored separately from data.json.
+ *
+ * Security preference order:
+ * 1. TOTP_SERVER_KEY environment variable (best — no file I/O)
+ * 2. File-based key at config/.totp-server-key (legacy / default)
  */
-function getServerSecret() {
+function getServerSecret(): string {
+  // Prefer ENV var for better security (no key on filesystem)
+  if (process.env.TOTP_SERVER_KEY) {
+    return process.env.TOTP_SERVER_KEY.trim();
+  }
+
+  // Fall back to file-based key (legacy / default)
+  log.warn('[TOTP] TOTP_SERVER_KEY env var not set — using file-based key. Consider setting TOTP_SERVER_KEY in your environment for better security.');
+
   try {
     if (fs.existsSync(SERVER_SECRET_PATH)) {
       return fs.readFileSync(SERVER_SECRET_PATH, 'utf8').trim();
     }
   } catch (e) {
-    log.error('[TOTP-Crypto] Error reading server secret:', e.message);
+    const error = e as Error;
+    log.error('[TOTP-Crypto] Error reading server secret:', error.message);
   }
 
   // Generate a new server secret
@@ -42,12 +64,13 @@ function getServerSecret() {
   try {
     const dir = path.dirname(SERVER_SECRET_PATH);
     if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     }
     fs.writeFileSync(SERVER_SECRET_PATH, secret, { mode: 0o600 });
     log.info('[TOTP-Crypto] Generated new server secret for TOTP encryption');
   } catch (e) {
-    log.error('[TOTP-Crypto] Failed to write server secret:', e.message);
+    const error = e as Error;
+    log.error('[TOTP-Crypto] Failed to write server secret:', error.message);
     // Still return the secret for this session — encryption will work in memory
   }
   return secret;
@@ -56,7 +79,7 @@ function getServerSecret() {
 /**
  * Derive an AES-256 key from the server secret and a salt.
  */
-function deriveKey(serverSecret, salt) {
+function deriveKey(serverSecret: string, salt: Buffer): Buffer {
   return crypto.pbkdf2Sync(serverSecret, salt, PBKDF2_ITERATIONS, KEY_LENGTH, 'sha512');
 }
 
@@ -64,7 +87,7 @@ function deriveKey(serverSecret, salt) {
  * Encrypt a TOTP secret (Base32 string) for storage.
  * Returns: "enc:v1:<salt>:<iv>:<authTag>:<ciphertext>" (all hex)
  */
-function encryptTotpSecret(plainBase32) {
+function encryptTotpSecret(plainBase32: string): string {
   if (!plainBase32 || typeof plainBase32 !== 'string') {
     throw new Error('Invalid TOTP secret');
   }
@@ -87,7 +110,7 @@ function encryptTotpSecret(plainBase32) {
  * Accepts both encrypted format and legacy plaintext Base32.
  * Returns the plaintext Base32 string.
  */
-function decryptTotpSecret(stored) {
+function decryptTotpSecret(stored: string): string | null {
   if (!stored || typeof stored !== 'string') {
     return null;
   }
@@ -119,7 +142,8 @@ function decryptTotpSecret(stored) {
 
     return decrypted;
   } catch (e) {
-    log.error('[TOTP-Crypto] Decryption failed:', e.message);
+    const error = e as Error;
+    log.error('[TOTP-Crypto] Decryption failed:', error.message);
     return null;
   }
 }
@@ -127,7 +151,7 @@ function decryptTotpSecret(stored) {
 /**
  * Check if a stored value is already encrypted.
  */
-function isEncrypted(stored) {
+function isEncrypted(stored: unknown): boolean {
   return typeof stored === 'string' && stored.startsWith(ENCRYPTED_PREFIX);
 }
 
@@ -135,8 +159,8 @@ function isEncrypted(stored) {
  * Migrate a plaintext TOTP secret to encrypted format.
  * Returns the encrypted string, or null if already encrypted or invalid.
  */
-function migrateToEncrypted(stored) {
-  if (!stored || isEncrypted(stored)) return null;
+function migrateToEncrypted(stored: unknown): string | null {
+  if (typeof stored !== 'string' || !stored || isEncrypted(stored)) return null;
   return encryptTotpSecret(stored);
 }
 

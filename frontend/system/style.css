@@ -1,0 +1,863 @@
+/* system/style.css — extracted from style.css */
+/* Lines from source: 9845–10032, 10452–10666, 11550–11873, 11932–12065 */
+
+/* System Updates */
+.misc-status-placeholder {
+    color: var(--text-dim);
+}
+
+.misc-status-checking {
+    color: #f59e0b;
+}
+
+.misc-update-warning-box {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+}
+
+.misc-update-warning-title {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.misc-update-warning-text {
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.misc-update-code {
+    display: block;
+    margin-top: 5px;
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.misc-update-available-title {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.misc-update-version-info {
+    margin-top: 8px;
+    color: var(--text-dim);
+}
+
+.misc-update-version-highlight {
+    color: #10b981;
+}
+
+.misc-update-changelog-wrap {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.misc-update-changelog-code {
+    display: block;
+    margin-top: 5px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    white-space: pre-wrap;
+}
+
+.misc-update-uptodate-title {
+    color: #6366f1;
+}
+
+.misc-update-uptodate-text {
+    margin-top: 8px;
+    color: var(--text-dim);
+}
+
+.misc-update-progress-info {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.misc-update-progress-text {
+    margin-top: 8px;
+    color: var(--text-dim);
+}
+
+.misc-update-progress-wrap {
+    margin-top: 10px;
+}
+
+.misc-update-progress-bar-bg {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.misc-update-progress-bar {
+    height: 100%;
+    background: #10b981;
+    width: 0%;
+    transition: width 0.5s;
+}
+
+.misc-os-update-security-badge {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.misc-os-update-available-title {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.misc-os-update-code {
+    display: block;
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.misc-os-uptodate-title {
+    color: #6366f1;
+}
+
+.misc-os-uptodate-text {
+    margin-top: 4px;
+    color: var(--text-dim);
+}
+
+.misc-os-install-started-title {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.misc-os-install-started-text {
+    margin-top: 8px;
+    color: var(--text-dim);
+}
+
+.misc-update-banner-icon {
+    font-size: 24px;
+}
+
+.misc-update-banner-content {
+    flex: 1;
+}
+
+.misc-update-banner-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.misc-update-banner-version {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+.misc-update-banner-view-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.misc-update-banner-close-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 4px;
+}
+
+.misc-about-text {
+    color: var(--text-dim);
+    margin-top: 10px;
+}
+
+/* UPS Monitor */
+.ups-loading {
+    color: var(--text-dim);
+}
+
+.ups-not-detected-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: var(--bg-hover);
+    border-radius: 8px;
+}
+
+.ups-not-detected-icon {
+    font-size: 2rem;
+}
+
+.ups-not-detected-title {
+    font-weight: 500;
+}
+
+.ups-not-detected-text {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.ups-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.ups-stat-card {
+    padding: 15px;
+    background: var(--bg-hover);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.ups-stat-icon {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.ups-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.ups-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.ups-details-wrap {
+    margin-top: 15px;
+    padding: 12px;
+    background: var(--bg-hover);
+    border-radius: 8px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.ups-error {
+    color: #ef4444;
+}
+
+/* Notifications Config */
+.notif-email-title {
+    margin-bottom: 12px;
+}
+
+.notif-email-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notif-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+.notif-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.notif-port-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    width: 100px;
+}
+
+.notif-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.notif-btn-row {
+    display: flex;
+    gap: 8px;
+}
+
+.notif-test-btn {
+    background: #6366f1;
+}
+
+.notif-telegram-title {
+    margin-bottom: 12px;
+}
+
+.notif-telegram-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notif-error-title {
+    margin-bottom: 8px;
+}
+
+.notif-error-desc {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+.notif-error-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 500px;
+}
+
+.notif-error-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.notif-error-options {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notif-error-field-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.notif-error-select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.notif-error-channel-row {
+    display: flex;
+    gap: 15px;
+}
+
+.notif-error-channel-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.notif-error-severity-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.notif-error-threshold-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    width: 100px;
+}
+
+.notif-error-last-check {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.notif-error-btn-row {
+    display: flex;
+    gap: 8px;
+}
+
+.notif-error-test-btn {
+    background: #6366f1;
+}
+
+/* Samba Shares Section */
+/* Samba section — structural classes (mirrors NFS pattern) */
+.samba-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.samba-btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.samba-restart-btn {
+    background: var(--warning) !important;
+}
+
+.samba-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+}
+
+.samba-status-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.samba-status-inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.samba-shares-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.samba-share-card {
+    padding: 15px;
+    position: relative;
+}
+
+.samba-card-title {
+    margin: 0 0 4px 0;
+    font-size: 0.95rem;
+}
+
+.samba-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    font-size: 1rem;
+    transition: opacity 0.2s ease;
+}
+
+.samba-delete-btn:hover {
+    opacity: 1;
+}
+
+.samba-empty-state {
+    padding: 20px;
+    color: var(--text-dim);
+    grid-column: 1 / -1;
+    text-align: center;
+}
+
+.samba-error-state {
+    padding: 20px;
+    color: var(--danger);
+    grid-column: 1 / -1;
+}
+
+.samba-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.samba-path-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.samba-badges-container {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.samba-badge-readonly {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.samba-badge-readwrite {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.samba-badge-guest {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-secondary);    /* WCAG AA — was #94a3b8 (insufficient contrast) */
+}
+
+.samba-comment-text {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+}
+
+.samba-modal-content {
+    max-width: 450px;
+    width: 90%;
+}
+
+.samba-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.samba-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.samba-checkbox-row {
+    display: flex;
+    gap: 20px;
+}
+
+.samba-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+/* =============================================================================
+   NFS Section — Mirrors Samba design pattern
+   ============================================================================= */
+
+.nfs-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.nfs-btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.nfs-restart-btn {
+    background: var(--warning) !important;
+}
+
+.nfs-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+}
+
+.nfs-status-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.nfs-status-inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.nfs-shares-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.nfs-share-card {
+    padding: 15px;
+    position: relative;
+}
+
+.nfs-card-header {
+    margin-bottom: 8px;
+}
+
+.nfs-card-title {
+    margin: 0 0 4px 0;
+    font-size: 0.95rem;
+}
+
+.nfs-path-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.nfs-badges-container {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.nfs-badge-readonly {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.nfs-badge-readwrite {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.nfs-badge-options {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.nfs-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    font-size: 1rem;
+    transition: opacity 0.2s ease;
+}
+
+.nfs-delete-btn:hover {
+    opacity: 1;
+}
+
+.nfs-empty-state {
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    grid-column: 1 / -1;
+}
+
+.nfs-modal-content {
+    max-width: 450px;
+    width: 90%;
+}
+
+.nfs-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nfs-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.nfs-help-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: -8px;
+}
+
+.nfs-checkbox-row {
+    display: flex;
+    gap: 20px;
+}
+
+.nfs-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+/* Notifications Config Section */
+.notif-section-title {
+    margin-bottom: 12px;
+}
+
+.notif-email-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notif-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+.notif-port-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    width: 100px;
+}
+
+.notif-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.notif-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.notif-checkbox-label-lg {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notif-button-row {
+    display: flex;
+    gap: 8px;
+}
+
+.notif-test-btn {
+    background: #6366f1;
+}
+
+.notif-telegram-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notif-error-report-description {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+.notif-error-report-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 500px;
+}
+
+.notif-error-report-main-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.notif-error-options {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notif-error-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.notif-error-select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.notif-error-radio-group {
+    display: flex;
+    gap: 15px;
+}
+
+.notif-error-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.notif-error-checkbox-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.notif-error-threshold-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    width: 100px;
+}
+
+.notif-error-last-check {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}

@@ -203,8 +203,8 @@ function validateComposeContent(content: unknown): ComposeValidationResult {
     try {
         const yaml = require('js-yaml');
         parsed = yaml.load(content);
-    } catch (e: any) {
-        if (e.code === 'MODULE_NOT_FOUND') {
+    } catch (e: unknown) {
+        if ((e as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND') {
             console.warn('[sanitize] js-yaml not available, falling back to regex validation');
             // js-yaml not available: fall back to strict keyword check
             // Require 'services:' with a colon to avoid plain-text false positives
@@ -213,7 +213,7 @@ function validateComposeContent(content: unknown): ComposeValidationResult {
             }
             return { valid: true };
         }
-        return { valid: false, error: `Invalid YAML: ${e.message}` };
+        return { valid: false, error: `Invalid YAML: ${(e as Error).message}` };
     }
 
     if (!parsed || typeof parsed !== 'object') {

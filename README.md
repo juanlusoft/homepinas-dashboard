@@ -1,82 +1,140 @@
-# Dashcodex
+# HomePiNAS Dashboard
 
-Dashboard NAS full-stack (frontend + backend) preparado para produccion, con arquitectura modular y validacion tecnica completa.
+Premium NAS management dashboard for Raspberry Pi CM5 and similar ARM single-board computers. Self-hosted, no cloud dependency.
 
-## Estado
+## Features
 
-- Backend tests: 531/531 OK
-- Lint backend: OK
-- Frontend bundle: OK (esbuild)
-- Refactor modular aplicado y duplicados criticos eliminados
+| Module | Description |
+|--------|-------------|
+| **Dashboard** | System overview — CPU, RAM, temps, uptime, network |
+| **Storage** | ZFS/mergerfs pools, disk health (SMART), SnapRAID |
+| **Docker** | Container management + compose editor |
+| **Files** | File browser with upload/download/preview |
+| **Network** | Interface stats, public IP, WireGuard VPN |
+| **Backup** | Local, Active Backup (Synology-style), cloud sync |
+| **Logs** | Live system log viewer |
+| **Users** | Multi-user RBAC with 2FA (TOTP) |
+| **Terminal** | Browser-based PTY terminal over WebSocket |
+| **Shortcuts** | Bookmarks to local services |
 
 ## Stack
 
-- Backend: Node.js + Express
-- Frontend: Vanilla JS modular
-- DB local/config: JSON + SQLite (segun modulo)
-- Seguridad: sesiones, CSRF, RBAC, 2FA TOTP, rate limiting
+- **Backend** — Node.js 20+ / Express 4, TypeScript (tsx, no compile step)
+- **Frontend** — Vanilla JS ES Modules SPA, no build step, lazy-loaded modules
+- **Auth** — Session-based + CSRF + RBAC + TOTP 2FA
+- **Security** — helmet, rate limiting, input sanitization, command allowlist
+- **Storage** — SQLite (sessions) + JSON (config/data)
+- **Realtime** — WebSocket (terminal PTY, polling)
 
-## Estructura
+## Requirements
 
-```
-backend/                  # API, middleware, utilidades, tests
-frontend/                 # UI modular
-frontend/modules/         # modulos por feature
-scripts/                  # build/utilidades
-index.html                # entrada web
-```
+- Node.js >= 20
+- npm >= 10
+- Linux host (Raspberry Pi OS, Debian, Ubuntu) — commands use Linux paths/tools
+- Optional: `openssl` for auto-generated self-signed certs
 
-## Requisitos
-
-- Node.js 20+
-- npm 10+
-
-## Instalacion
+## Installation
 
 ```bash
 npm install
 ```
 
-## Desarrollo
+> `better-sqlite3` requires a C++ toolchain to compile. On Raspberry Pi OS run `apt install build-essential` first.
+> For development on Windows/macOS, use `npm install --ignore-scripts` (SQLite sessions won't work, but typecheck and tests will).
+
+## Development
 
 ```bash
+# Start with hot reload (nodemon + tsx)
 npm run dev
+
+# TypeScript type check (no emit)
+npm run typecheck
+
+# Tests (vitest)
+npm test
+
+# Lint
+npm run lint
+npm run lint:fix
 ```
 
-## Produccion
+## Production
 
 ```bash
-npm run build
 npm start
 ```
 
-## Validacion local
+The server listens on `0.0.0.0:443` (HTTPS) and `0.0.0.0:80` (HTTP → HTTPS redirect).
+SSL certificates are auto-generated (self-signed) on first run if not present in `backend/certs/`.
+
+Override ports via environment variables:
 
 ```bash
-npm run lint
-npm test -- --runInBand
+HTTPS_PORT=8443 HTTP_PORT=8080 npm start
 ```
 
-## Modulos clave
+## Environment Variables
 
-- Storage Wizard / Dashboard
-- Docker Manager
-- VPN WireGuard
-- Network Manager
-- File Manager
-- Users + Auth/2FA
-- Backups (local, active-backup, cloud)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HTTPS_PORT` | `443` | HTTPS port |
+| `HTTP_PORT` | `80` | HTTP port |
+| `SESSION_DURATION` | `86400000` | Session max age (ms) |
+| `SESSION_IDLE_TIMEOUT` | `3600000` | Session idle timeout (ms) |
+| `TEMP_THRESHOLD_C` | `75` | Disk temperature alert threshold (°C) |
+| `POOL_USAGE_THRESHOLD` | `85` | Storage pool usage alert (%) |
+| `TOTP_SERVER_KEY` | *(file)* | AES-256-GCM key for TOTP secret encryption |
 
-## Notas
+## Project Structure
 
-- Proyecto preparado para despliegue en NAS Linux.
-- Para validacion real 100%, se recomienda smoke test E2E en el NAS objetivo.
-- Diagnostico wizard en NAS:
-  - `sudo homepinas-diagnose start`
-  - `sudo homepinas-diagnose snapshot`
-  - `sudo homepinas-diagnose stop`
-  - `sudo homepinas-diagnose pack`
+```
+backend/               # TypeScript — Express API + utilities
+  ├─ index.ts          # Entry point (bootstrap)
+  ├─ middleware.ts      # Helmet, CORS, CSRF, rate limit, static files
+  ├─ routes.ts         # Route registration
+  ├─ ssl-setup.ts      # HTTPS server + WebSocket setup
+  ├─ auth.ts / rbac.ts # Authentication + role-based access control
+  ├─ session.ts        # SQLite session store
+  ├─ security.ts       # safeExec() command allowlist + injection prevention
+  ├─ sanitize.ts       # Input validation and sanitization
+  ├─ data.ts           # JSON data store (withData mutex)
+  ├─ health-monitor.ts # SMART, temps, pool health checks
+  ├─ error-monitor.ts  # Journalctl error scanning + alerts
+  ├─ terminal-ws.ts    # PTY WebSocket (node-pty)
+  ├─ metrics.ts        # Prometheus-style metrics endpoint
+  ├─ notify.ts         # Email + Telegram notifications
+  ├─ totp-crypto.ts    # AES-256-GCM TOTP secret encryption
+  ├─ routes/           # API route modules (/api/*)
+  └─ tests/            # Vitest unit tests
 
-## Licencia
+frontend/              # Vanilla JS ES Modules SPA
+  ├─ main.js           # Module loader (lazy, error boundary, paid overlay)
+  ├─ modules/          # One directory per feature module
+  │   ├─ dashboard/
+  │   ├─ storage/
+  │   ├─ docker/
+  │   ├─ files/
+  │   ├─ network/
+  │   └─ ...
+  ├─ core/             # Auth, polling, 2FA, state
+  └─ style-base.css    # Shared styles (per-module styles in modules/*/style.css)
+
+docs/
+  └─ superpowers/      # Architecture specs and implementation plans
+```
+
+## Security
+
+- All commands go through an allowlist (`security.ts`) — no arbitrary shell execution
+- TOTP secrets encrypted at rest with AES-256-GCM (key in `TOTP_SERVER_KEY` env var)
+- CSRF tokens on all state-changing requests
+- Per-endpoint rate limiting (auth, password reset, 2FA, API)
+- Input sanitization on all user-supplied data
+- Path traversal prevention with `dangerousPaths` blocklist
+- Helmet security headers + strict CSP
+- Sessions expire and rotate on privilege change
+
+## License
 
 MIT

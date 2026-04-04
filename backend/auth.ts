@@ -3,6 +3,8 @@
  * v1.5.6 - Modular Architecture
  */
 
+import type { RequestHandler } from 'express-serve-static-core';
+
 const { validateSession } = require('../utils/session');
 const { logSecurityEvent } = require('../utils/security');
 
@@ -10,7 +12,7 @@ const { logSecurityEvent } = require('../utils/security');
  * Require authentication middleware
  * Checks X-Session-Id header first, then falls back to query param (for direct URLs like images)
  */
-function requireAuth(req, res, next) {
+const requireAuth: RequestHandler = (req, res, next) => {
     // Try header first, then query string (for direct URL access like img src)
     const sessionId = req.headers['x-session-id'] || req.query.sessionId;
     const session = validateSession(sessionId);
@@ -22,7 +24,7 @@ function requireAuth(req, res, next) {
 
     req.user = session;
     next();
-}
+};
 
 module.exports = {
     requireAuth

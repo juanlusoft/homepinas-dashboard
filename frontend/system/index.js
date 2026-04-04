@@ -336,4 +336,8 @@ export function cleanup() {
     _systemListeners = [];
 }
 
+export async function render(container) {
+    await renderSystemView();
+}
+
 export { renderSystemView };

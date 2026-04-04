@@ -11,16 +11,65 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Database = require('better-sqlite3');
 
-const SESSION_DB_PATH = path.join(__dirname, '..', 'config', 'sessions.db');
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours absolute expiration
-const SESSION_IDLE_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours idle timeout
+import type { Database as BetterSqlite3Database } from 'better-sqlite3';
 
-let sessionDb = null;
+const SESSION_DB_PATH = path.join(__dirname, '..', 'config', 'sessions.db');
+const SESSION_DURATION = (() => {
+  const v = parseInt(process.env.SESSION_DURATION ?? '', 10);
+  if (process.env.SESSION_DURATION && isNaN(v)) {
+    console.warn(`[session] Invalid SESSION_DURATION env var: "${process.env.SESSION_DURATION}", using default`);
+  }
+  return isNaN(v) ? 24 * 60 * 60 * 1000 : v;
+})();
+const SESSION_IDLE_TIMEOUT = (() => {
+  const v = parseInt(process.env.SESSION_IDLE_TIMEOUT ?? '', 10);
+  if (process.env.SESSION_IDLE_TIMEOUT && isNaN(v)) {
+    console.warn(`[session] Invalid SESSION_IDLE_TIMEOUT env var: "${process.env.SESSION_IDLE_TIMEOUT}", using default`);
+  }
+  return isNaN(v) ? 2 * 60 * 60 * 1000 : v;
+})();
+
+let sessionDb: BetterSqlite3Database | null = null;
+
+/**
+ * Session data interface (row shape from database)
+ */
+interface SessionRow {
+  session_id: string;
+  username: string;
+  expires_at: number;
+  created_at: number;
+  last_activity: number | null;
+}
+
+/**
+ * Session validation result interface
+ */
+interface SessionData {
+  username: string;
+  expiresAt: number;
+}
+
+/**
+ * CSRF token row from database
+ */
+interface CsrfTokenRow {
+  token: string;
+  created_at: number;
+}
+
+/**
+ * CSRF token result interface
+ */
+interface CsrfToken {
+  token: string;
+  createdAt: number;
+}
 
 /**
  * Initialize SQLite session database
  */
-function initSessionDb() {
+function initSessionDb(): boolean {
     try {
         const configDir = path.dirname(SESSION_DB_PATH);
         if (!fs.existsSync(configDir)) {
@@ -36,7 +85,10 @@ function initSessionDb() {
             log.warn('Could not set restrictive permissions on session database');
         }
 
-        sessionDb.exec(`
+        // sessionDb is guaranteed non-null here after successful new Database()
+        const db = sessionDb!;
+
+        db.exec(`
             CREATE TABLE IF NOT EXISTS sessions (
                 session_id TEXT PRIMARY KEY,
                 username TEXT NOT NULL,
@@ -45,21 +97,21 @@ function initSessionDb() {
                 last_activity INTEGER DEFAULT (strftime('%s', 'now') * 1000)
             )
         `);
-        
+
         // Migration: add last_activity column if missing
         try {
-            sessionDb.exec(`ALTER TABLE sessions ADD COLUMN last_activity INTEGER DEFAULT (strftime('%s', 'now') * 1000)`);
+            db.exec(`ALTER TABLE sessions ADD COLUMN last_activity INTEGER DEFAULT (strftime('%s', 'now') * 1000)`);
         } catch (e) {
             // Column already exists, ignore
         }
 
-        sessionDb.exec(`
+        db.exec(`
             CREATE INDEX IF NOT EXISTS idx_sessions_expires
             ON sessions(expires_at)
         `);
 
         // CSRF tokens table (persistent across restarts)
-        sessionDb.exec(`
+        db.exec(`
             CREATE TABLE IF NOT EXISTS csrf_tokens (
                 session_id TEXT PRIMARY KEY,
                 token TEXT NOT NULL,
@@ -72,7 +124,8 @@ function initSessionDb() {
 
         return true;
     } catch (e) {
-        log.error('Failed to initialize session database:', e.message);
+        const error = e as Error;
+        log.error('Failed to initialize session database:', error.message);
         return false;
     }
 }
@@ -80,7 +133,7 @@ function initSessionDb() {
 /**
  * Create a new session
  */
-function createSession(username) {
+function createSession(username: string): string | null {
     const sessionId = uuidv4();
     const expiresAt = Date.now() + SESSION_DURATION;
 
@@ -97,7 +150,8 @@ function createSession(username) {
         stmt.run(sessionId, username, expiresAt);
         return sessionId;
     } catch (e) {
-        log.error('Failed to create session:', e.message);
+        const error = e as Error;
+        log.error('Failed to create session:', error.message);
         return null;
     }
 }
@@ -105,7 +159,7 @@ function createSession(username) {
 /**
  * Validate a session (checks absolute expiration and idle timeout)
  */
-function validateSession(sessionId) {
+function validateSession(sessionId: string): SessionData | null {
     if (!sessionId || !sessionDb) return null;
 
     try {
@@ -114,7 +168,7 @@ function validateSession(sessionId) {
             FROM sessions
             WHERE session_id = ?
         `);
-        const session = stmt.get(sessionId);
+        const session = stmt.get(sessionId) as SessionRow | undefined;
 
         if (!session) return null;
 
@@ -148,7 +202,8 @@ function validateSession(sessionId) {
             expiresAt: session.expires_at
         };
     } catch (e) {
-        log.error('Failed to validate session:', e.message);
+        const error = e as Error;
+        log.error('Failed to validate session:', error.message);
         return null;
     }
 }
@@ -156,59 +211,62 @@ function validateSession(sessionId) {
 /**
  * Destroy a session
  */
-function destroySession(sessionId) {
+function destroySession(sessionId: string): void {
     if (!sessionDb) return;
 
     try {
         const stmt = sessionDb.prepare('DELETE FROM sessions WHERE session_id = ?');
         stmt.run(sessionId);
     } catch (e) {
-        log.error('Failed to destroy session:', e.message);
+        const error = e as Error;
+        log.error('Failed to destroy session:', error.message);
     }
 }
 
 /**
  * Clear all sessions
  */
-function clearAllSessions() {
+function clearAllSessions(): void {
     if (!sessionDb) return;
 
     try {
         sessionDb.exec('DELETE FROM sessions');
     } catch (e) {
-        log.error('Failed to clear sessions:', e.message);
+        const error = e as Error;
+        log.error('Failed to clear sessions:', error.message);
     }
 }
 
 /**
  * Clean expired sessions (absolute expiration and idle timeout)
  */
-function cleanExpiredSessions() {
+function cleanExpiredSessions(): void {
     if (!sessionDb) return;
 
     try {
         const now = Date.now();
         const idleThreshold = now - SESSION_IDLE_TIMEOUT;
-        
+
         // Delete sessions that are expired OR idle too long
         const stmt = sessionDb.prepare(`
-            DELETE FROM sessions 
-            WHERE expires_at < ? 
+            DELETE FROM sessions
+            WHERE expires_at < ?
             OR (last_activity IS NOT NULL AND last_activity < ?)
         `);
-        const result = stmt.run(now, idleThreshold);
+        const result = stmt.run(now, idleThreshold) as { changes: number };
         if (result.changes > 0) {
             log.info(`Cleaned ${result.changes} expired/idle sessions`);
         }
     } catch (e) {
-        log.error('Failed to clean expired sessions:', e.message);
+        const error = e as Error;
+        log.error('Failed to clean expired sessions:', error.message);
     }
 }
 
 /**
  * Start periodic cleanup (sessions + CSRF tokens)
  */
-function startSessionCleanup() {
+function startSessionCleanup(): void {
     setInterval(() => {
         cleanExpiredSessions();
         cleanExpiredCsrfTokens();
@@ -222,7 +280,7 @@ const CSRF_TOKEN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 /**
  * Store CSRF token in database
  */
-function storeCsrfToken(sessionId, token) {
+function storeCsrfToken(sessionId: string, token: string): boolean {
     if (!sessionDb || !sessionId || !token) return false;
 
     try {
@@ -233,7 +291,8 @@ function storeCsrfToken(sessionId, token) {
         stmt.run(sessionId, token, Date.now());
         return true;
     } catch (e) {
-        log.error('Failed to store CSRF token:', e.message);
+        const error = e as Error;
+        log.error('Failed to store CSRF token:', error.message);
         return false;
     }
 }
@@ -241,26 +300,27 @@ function storeCsrfToken(sessionId, token) {
 /**
  * Get CSRF token from database
  */
-function getCsrfTokenFromDb(sessionId) {
+function getCsrfTokenFromDb(sessionId: string): CsrfToken | null {
     if (!sessionDb || !sessionId) return null;
 
     try {
         const stmt = sessionDb.prepare(`
             SELECT token, created_at FROM csrf_tokens WHERE session_id = ?
         `);
-        const row = stmt.get(sessionId);
-        
+        const row = stmt.get(sessionId) as CsrfTokenRow | undefined;
+
         if (!row) return null;
-        
+
         // Check expiration
         if (Date.now() - row.created_at > CSRF_TOKEN_DURATION) {
             deleteCsrfToken(sessionId);
             return null;
         }
-        
+
         return { token: row.token, createdAt: row.created_at };
     } catch (e) {
-        log.error('Failed to get CSRF token:', e.message);
+        const error = e as Error;
+        log.error('Failed to get CSRF token:', error.message);
         return null;
     }
 }
@@ -268,32 +328,34 @@ function getCsrfTokenFromDb(sessionId) {
 /**
  * Delete CSRF token from database
  */
-function deleteCsrfToken(sessionId) {
+function deleteCsrfToken(sessionId: string): void {
     if (!sessionDb || !sessionId) return;
 
     try {
         const stmt = sessionDb.prepare('DELETE FROM csrf_tokens WHERE session_id = ?');
         stmt.run(sessionId);
     } catch (e) {
-        log.error('Failed to delete CSRF token:', e.message);
+        const error = e as Error;
+        log.error('Failed to delete CSRF token:', error.message);
     }
 }
 
 /**
  * Clean expired CSRF tokens
  */
-function cleanExpiredCsrfTokens() {
+function cleanExpiredCsrfTokens(): void {
     if (!sessionDb) return;
 
     try {
         const threshold = Date.now() - CSRF_TOKEN_DURATION;
         const stmt = sessionDb.prepare('DELETE FROM csrf_tokens WHERE created_at < ?');
-        const result = stmt.run(threshold);
+        const result = stmt.run(threshold) as { changes: number };
         if (result.changes > 0) {
             log.info(`Cleaned ${result.changes} expired CSRF tokens`);
         }
     } catch (e) {
-        log.error('Failed to clean CSRF tokens:', e.message);
+        const error = e as Error;
+        log.error('Failed to clean CSRF tokens:', error.message);
     }
 }
 
