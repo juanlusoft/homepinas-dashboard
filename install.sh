@@ -80,10 +80,9 @@ info "Arch: ${SYS_ARCH}  |  Distro: ${DISTRO_PRETTY}"
 # ---------------------------------------------------------------------------
 # 3. System update
 # ---------------------------------------------------------------------------
-info "Updating system packages..."
+info "Updating package lists..."
 apt-get update -qq
-apt-get upgrade -y -qq
-ok "System updated"
+ok "Package lists updated"
 
 # ---------------------------------------------------------------------------
 # 4. Core build tools
@@ -484,26 +483,6 @@ SERVICE
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
 ok "Service installed and enabled"
-
-# ---------------------------------------------------------------------------
-# 15. Type check + tests (smoke check)
-# ---------------------------------------------------------------------------
-info "Running TypeScript smoke check..."
-cd "$INSTALL_DIR"
-if su -c "cd '${INSTALL_DIR}' && npm run typecheck 2>&1 | tail -1" "$REAL_USER" 2>/dev/null | grep -q "error TS"; then
-    warn "TypeScript errors detected — run 'npm run typecheck' to investigate"
-else
-    ok "TypeScript: clean"
-fi
-
-info "Running tests..."
-TEST_RESULT=$(su -c "cd '${INSTALL_DIR}' && npm test 2>&1 | tail -3" "$REAL_USER" 2>/dev/null || echo "")
-if echo "$TEST_RESULT" | grep -q "failed"; then
-    warn "Some tests failed — run 'npm test' to investigate"
-else
-    PASSED=$(echo "$TEST_RESULT" | grep -oP '\d+ passed' | head -1)
-    ok "Tests: ${PASSED:-all passing}"
-fi
 
 # ---------------------------------------------------------------------------
 # 16. Start service
