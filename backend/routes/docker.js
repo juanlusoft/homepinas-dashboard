@@ -151,7 +151,7 @@ router.post('/action', requireAuth, requirePermission('write'), async (req, res)
         return res.json({ success: true });
     } catch (err) {
         log.error('[docker] action error:', err.message);
-        return res.status(500).json({ error: `Docker action failed: ${err.message}` });
+        return res.status(500).json({ error: 'Docker action failed' });
     }
 });
 
@@ -169,26 +169,33 @@ router.post('/check-updates', requireAuth, requirePermission('write'), async (re
 
         for (const image of images) {
             try {
+                // Get local image digest
                 const localResult = await safeExec('docker', [
                     'inspect', '--format', '{{index .RepoDigests 0}}', image
                 ]);
                 const localDigest = localResult.stdout.trim();
 
+                // Skip images without a registry digest (locally built or untagged)
+                if (!localDigest) continue;
+
+                // Get remote manifest digest
                 const remoteResult = await safeExec('docker', [
-                    'manifest', 'inspect', image
+                    'manifest', 'inspect', '--verbose', image
                 ]);
 
-                let remoteOk = false;
+                let remoteDigest = '';
                 try {
                     const manifest = JSON.parse(remoteResult.stdout);
-                    remoteOk = !!manifest.schemaVersion;
+                    // manifest inspect --verbose returns Descriptor.Digest for single-arch
+                    remoteDigest = manifest.Descriptor?.Digest || manifest.digest || '';
                 } catch {}
 
-                if (!localDigest || !remoteOk) {
+                // If we got both digests and they differ, there is an update
+                if (remoteDigest && localDigest !== remoteDigest) {
                     updatesAvailable.push(image);
                 }
             } catch {
-                // Network error or image not on registry — skip
+                // Network error, registry unavailable, or experimental API not supported — skip
             }
         }
 
@@ -237,7 +244,7 @@ router.post('/update', requireAuth, requirePermission('write'), async (req, res)
         return res.json({ success: true });
     } catch (err) {
         log.error('[docker] update error:', err.message);
-        return res.status(500).json({ error: `Update failed: ${err.message}` });
+        return res.status(500).json({ error: 'Update failed' });
     }
 });
 
@@ -316,7 +323,7 @@ router.post('/compose/up', requireAuth, requirePermission('write'), async (req, 
         return res.json({ success: true, output: result.stdout || result.stderr || '' });
     } catch (err) {
         log.error('[docker] compose/up error:', err.message);
-        return res.status(500).json({ error: `compose up failed: ${err.message}` });
+        return res.status(500).json({ error: 'compose up failed' });
     }
 });
 
@@ -341,7 +348,7 @@ router.post('/compose/down', requireAuth, requirePermission('write'), async (req
         return res.json({ success: true });
     } catch (err) {
         log.error('[docker] compose/down error:', err.message);
-        return res.status(500).json({ error: `compose down failed: ${err.message}` });
+        return res.status(500).json({ error: 'compose down failed' });
     }
 });
 

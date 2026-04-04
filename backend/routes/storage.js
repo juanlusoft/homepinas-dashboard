@@ -14,11 +14,11 @@
 
 const router  = require('express').Router();
 const path    = require('path');
-const { safeExec, sudoExec } = require('../security');
+const { safeExec, sudoExec, safeSpawn } = require('../security');
 const { withData, getData }  = require('../data');
 const { requireAuth }        = require('../auth');
 const { requirePermission }  = require('../rbac');
-const { sanitizeDiskId, validateDiskConfig } = require('../sanitize');
+const { sanitizeDiskId, validateDiskConfig, sanitizePath } = require('../sanitize');
 const log     = require('../logger');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -177,8 +177,7 @@ router.post('/snapraid/sync', requireAuth, requirePermission('write'), async (re
 
         (async () => {
             try {
-                const { spawn } = require('child_process');
-                const proc = spawn('snapraid', ['sync'], { stdio: ['ignore', 'pipe', 'pipe'] });
+                const proc = safeSpawn('snapraid', ['sync'], { stdio: ['ignore', 'pipe', 'pipe'] });
 
                 proc.stdout.on('data', (chunk) => {
                     const text = chunk.toString();
@@ -277,6 +276,12 @@ router.post('/move-now', requireAuth, requirePermission('write'), async (req, re
         const cfg        = data.storageConfig || {};
         const cacheMount = cfg.cacheMount || '/mnt/cache';
         const poolMount  = cfg.poolMount   || '/mnt/storage';
+
+        // Validate mount paths are under /mnt/ to prevent path injection
+        if (!cacheMount.startsWith('/mnt/') || !poolMount.startsWith('/mnt/')) {
+            log.error('[storage] move-now: invalid mount paths in storageConfig');
+            return res.status(500).json({ error: 'Invalid storage configuration' });
+        }
 
         (async () => {
             try {
@@ -442,8 +447,7 @@ router.post('/badblocks/:diskId', requireAuth, requirePermission('admin'), async
 
         (async () => {
             try {
-                const { spawn } = require('child_process');
-                const proc = spawn('badblocks', ['-sv', `/dev/${diskId}`], {
+                const proc = safeSpawn('badblocks', ['-sv', `/dev/${diskId}`], {
                     stdio: ['ignore', 'pipe', 'pipe']
                 });
 
@@ -652,12 +656,13 @@ router.get('/file-location', requireAuth, (req, res) => {
             return res.status(400).json({ error: 'path query parameter is required' });
         }
 
-        if (rawPath.includes('..') || rawPath.includes('\0')) {
+        const cleanPath = sanitizePath(rawPath);
+        if (!cleanPath) {
             return res.status(400).json({ error: 'Invalid path' });
         }
 
         const data     = getData();
-        const location = resolveFileLocation(rawPath, data.storageConfig);
+        const location = resolveFileLocation(cleanPath, data.storageConfig);
         return res.json(location);
     } catch (err) {
         log.error('[storage] file-location error:', err.message);
