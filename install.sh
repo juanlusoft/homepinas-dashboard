@@ -1,231 +1,385 @@
 #!/usr/bin/env bash
-# HomePiNAS Dashboard — Install / Setup Script
-# Tested on Raspberry Pi OS (Debian Bookworm), Ubuntu 22.04+
-# Run as root: sudo bash install.sh
-# Or as a normal user with sudo rights: bash install.sh
+# ═══════════════════════════════════════════════════════════════════════════
+# HomePiNAS Dashboard v3.5 — Installer
+# Installs the dashboard on Raspberry Pi OS / Debian Bookworm / Ubuntu 22.04+
 #
-# What this script does:
-#   1. Checks system requirements (Node.js >= 20, npm, openssl, build-essential)
-#   2. Installs missing system packages
-#   3. Runs npm install (compiles native modules: better-sqlite3, node-pty)
-#   4. Creates required directories
-#   5. Generates .env with TOTP_SERVER_KEY and sane defaults (skips if exists)
-#   6. Generates self-signed SSL certificates (skips if certs already present)
-#   7. Installs a systemd service (optional, asks)
-#   8. Runs typecheck + tests as a smoke check
+# Usage: sudo bash install.sh
+# ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
+
+APP_VERSION="3.5.0"
+REPO_URL="https://github.com/juanlusoft/homepinas-dashboard.git"
+BRANCH="main"
+INSTALL_DIR="/opt/homepinas"
+SERVICE_NAME="homepinas"
+NODE_MIN="20"
 
 # ---------------------------------------------------------------------------
 # Colours
 # ---------------------------------------------------------------------------
-RED='\033[0;31m'
-GRN='\033[0;32m'
-YLW='\033[1;33m'
-BLU='\033[1;34m'
-CYN='\033[0;36m'
-RST='\033[0m'
+RED='\033[0;31m'; GRN='\033[0;32m'; BLU='\033[0;34m'
+YLW='\033[1;33m'; CYN='\033[0;36m'; NC='\033[0m'
 
-step()  { echo -e "\n${BLU}▶ $*${RST}"; }
-ok()    { echo -e "  ${GRN}✓${RST} $*"; }
-warn()  { echo -e "  ${YLW}⚠${RST}  $*"; }
-error() { echo -e "  ${RED}✗${RST} $*" >&2; }
-die()   { error "$*"; exit 1; }
+info()  { echo -e "${BLU}[INFO]${NC}  $*"; }
+ok()    { echo -e "${GRN}[OK]${NC}    $*"; }
+warn()  { echo -e "${YLW}[WARN]${NC}  $*"; }
+error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
-# ---------------------------------------------------------------------------
-# Resolve script location (project root)
-# ---------------------------------------------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-PROJECT_ROOT="$SCRIPT_DIR"
+pkg_installed() { dpkg -l "$1" 2>/dev/null | grep -q "^ii"; }
 
-echo -e "${CYN}"
-echo "  ██╗  ██╗ ██████╗ ███╗   ███╗███████╗██████╗ ██╗███╗   ██╗ █████╗ ███████╗"
-echo "  ██║  ██║██╔═══██╗████╗ ████║██╔════╝██╔══██╗██║████╗  ██║██╔══██╗██╔════╝"
-echo "  ███████║██║   ██║██╔████╔██║█████╗  ██████╔╝██║██╔██╗ ██║███████║███████╗"
-echo "  ██╔══██║██║   ██║██║╚██╔╝██║██╔══╝  ██╔═══╝ ██║██║╚██╗██║██╔══██║╚════██║"
-echo "  ██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗██║     ██║██║ ╚████║██║  ██║███████║"
-echo "  ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝"
-echo -e "${RST}"
-echo -e "  ${CYN}HomePiNAS Dashboard — Installer${RST}"
-echo -e "  Project root: ${PROJECT_ROOT}\n"
-
-# ---------------------------------------------------------------------------
-# 1. Root / sudo check
-# ---------------------------------------------------------------------------
-step "Checking permissions"
-SUDO=""
-if [[ $EUID -ne 0 ]]; then
-    if command -v sudo &>/dev/null; then
-        SUDO="sudo"
-        warn "Not running as root — will use sudo for system package installation"
-    else
-        warn "Not root and sudo not found — system package installation may fail"
+install_pkg() {
+    local pkg="$1"
+    if pkg_installed "$pkg"; then
+        ok "$pkg already installed"
+        return 0
     fi
-else
-    ok "Running as root"
-fi
-
-# ---------------------------------------------------------------------------
-# 2. System requirements
-# ---------------------------------------------------------------------------
-step "Checking system requirements"
-
-# Node.js >= 20
-if ! command -v node &>/dev/null; then
-    die "Node.js not found. Install Node.js 20+ from https://nodejs.org or via nvm"
-fi
-NODE_VER=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
-if [[ "$NODE_VER" -lt 20 ]]; then
-    die "Node.js ${NODE_VER} found, but >= 20 is required"
-fi
-ok "Node.js v$(node --version | tr -d v) (>= 20 ✓)"
-
-# npm
-if ! command -v npm &>/dev/null; then
-    die "npm not found"
-fi
-ok "npm $(npm --version)"
-
-# openssl
-if ! command -v openssl &>/dev/null; then
-    warn "openssl not found — SSL certificate generation will be skipped"
-    HAS_OPENSSL=0
-else
-    ok "openssl $(openssl version | awk '{print $2}')"
-    HAS_OPENSSL=1
-fi
-
-# ---------------------------------------------------------------------------
-# 3. System packages (build-essential for native modules)
-# ---------------------------------------------------------------------------
-step "Installing system packages"
-
-if command -v apt-get &>/dev/null; then
-    MISSING_PKGS=()
-    for pkg in build-essential python3 openssl; do
-        if ! dpkg -s "$pkg" &>/dev/null 2>&1; then
-            MISSING_PKGS+=("$pkg")
-        fi
-    done
-
-    if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
-        echo "  Installing: ${MISSING_PKGS[*]}"
-        $SUDO apt-get update -qq
-        $SUDO apt-get install -y -qq "${MISSING_PKGS[@]}"
-        ok "System packages installed"
-        HAS_OPENSSL=1
+    info "Installing $pkg..."
+    if apt-get install -y "$pkg" >/dev/null 2>&1; then
+        ok "$pkg installed"
     else
-        ok "All required packages already installed"
+        warn "$pkg could not be installed — install manually if needed"
+        return 1
     fi
-else
-    warn "apt-get not found — skipping system package check (non-Debian system)"
-    warn "Ensure build-essential equivalent is installed for native module compilation"
-fi
+}
 
 # ---------------------------------------------------------------------------
-# 4. npm install (compiles better-sqlite3 and node-pty)
+# Header
 # ---------------------------------------------------------------------------
-step "Installing Node.js dependencies"
-
-if [[ -d node_modules && -f node_modules/.package-lock.json ]]; then
-    ok "node_modules already present — running npm ci for reproducible install"
-    npm ci --prefer-offline 2>&1 | grep -v "^npm warn" || true
-else
-    echo "  Compiling native modules (better-sqlite3, node-pty) — this may take a few minutes..."
-    npm install 2>&1 | grep -E "^(added|removed|changed|npm error)" || true
-fi
-ok "Dependencies installed"
+echo -e "${GRN}"
+echo "  ╔══════════════════════════════════════════════════╗"
+echo "  ║   HomePiNAS Dashboard v${APP_VERSION}                   ║"
+echo "  ║   NAS Management Dashboard — Raspberry Pi CM5   ║"
+echo "  ╚══════════════════════════════════════════════════╝"
+echo -e "${NC}"
 
 # ---------------------------------------------------------------------------
-# 5. Required directories
+# 1. Root check
 # ---------------------------------------------------------------------------
-step "Creating required directories"
+[ "$(id -u)" -ne 0 ] && error "Run as root: sudo bash install.sh"
 
-DIRS=(
-    "${PROJECT_ROOT}/config"
-    "${PROJECT_ROOT}/backend/certs"
-)
+# Detect real user (the one who invoked sudo)
+REAL_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+info "Installing as user: ${REAL_USER}"
 
-# Storage directories (only if /mnt/storage exists — i.e. running on the NAS)
-if [[ -d /mnt/storage ]]; then
-    DIRS+=("/mnt/storage/.tmp" "/mnt/storage/.uploads-tmp")
-fi
+# ---------------------------------------------------------------------------
+# 2. Architecture & distro detection
+# ---------------------------------------------------------------------------
+RAW_ARCH=$(uname -m)
+case "$RAW_ARCH" in
+    aarch64|arm64) SYS_ARCH="arm64" ;;
+    armv7l|armhf)  SYS_ARCH="armhf" ;;
+    x86_64)        SYS_ARCH="amd64" ;;
+    *)             SYS_ARCH="$RAW_ARCH" ;;
+esac
+DEBIAN_CODENAME=$(. /etc/os-release 2>/dev/null && echo "${VERSION_CODENAME:-unknown}")
+DISTRO_PRETTY=$(. /etc/os-release 2>/dev/null && echo "${PRETTY_NAME:-Linux}")
+info "Arch: ${SYS_ARCH}  |  Distro: ${DISTRO_PRETTY}"
 
-for dir in "${DIRS[@]}"; do
-    if [[ ! -d "$dir" ]]; then
-        mkdir -p "$dir"
-        ok "Created $dir"
-    else
-        ok "$dir already exists"
-    fi
+# ---------------------------------------------------------------------------
+# 3. System update
+# ---------------------------------------------------------------------------
+info "Updating system packages..."
+apt-get update -qq
+apt-get upgrade -y -qq
+ok "System updated"
+
+# ---------------------------------------------------------------------------
+# 4. Core build tools
+# ---------------------------------------------------------------------------
+info "Installing build essentials..."
+for pkg in build-essential python3 git curl openssl ca-certificates gnupg; do
+    install_pkg "$pkg"
 done
 
 # ---------------------------------------------------------------------------
-# 6. Environment file
+# 5. Node.js >= 20 (installs LTS 22 if missing or too old)
 # ---------------------------------------------------------------------------
-step "Setting up environment variables"
+install_node() {
+    info "Installing Node.js v22 LTS..."
+    if command -v apt-get &>/dev/null; then
+        curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
+        apt-get install -y nodejs >/dev/null 2>&1
+    elif command -v dnf &>/dev/null; then
+        curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
+        dnf install -y nodejs >/dev/null 2>&1
+    else
+        error "Unsupported package manager. Install Node.js v22+ manually from https://nodejs.org"
+    fi
+    ok "Node.js $(node --version) installed"
+}
 
-ENV_FILE="${PROJECT_ROOT}/.env"
+if command -v node &>/dev/null; then
+    NODE_VER=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
+    if [[ "$NODE_VER" -ge "$NODE_MIN" ]]; then
+        ok "Node.js $(node --version) (>= ${NODE_MIN} ✓)"
+    else
+        warn "Node.js $(node --version) too old — need v${NODE_MIN}+"
+        install_node
+    fi
+else
+    install_node
+fi
+
+# ---------------------------------------------------------------------------
+# 6. Docker + Docker Compose plugin
+# ---------------------------------------------------------------------------
+if ! command -v docker &>/dev/null; then
+    info "Installing Docker..."
+    curl -fsSL https://get.docker.com | sh >/dev/null 2>&1
+    ok "Docker $(docker --version | awk '{print $3}' | tr -d ',') installed"
+else
+    ok "Docker $(docker --version | awk '{print $3}' | tr -d ',') found"
+fi
+
+systemctl enable --now docker >/dev/null 2>&1 || true
+
+if ! id -nG "$REAL_USER" | grep -qw docker; then
+    usermod -aG docker "$REAL_USER"
+    ok "User ${REAL_USER} added to docker group (re-login required)"
+fi
+
+if ! docker compose version &>/dev/null 2>&1; then
+    info "Installing Docker Compose plugin..."
+    apt-get install -y docker-compose-plugin >/dev/null 2>&1 || {
+        COMPOSE_VER=$(curl -fsSL https://api.github.com/repos/docker/compose/releases/latest \
+            | grep '"tag_name"' | head -1 | cut -d'"' -f4)
+        mkdir -p /usr/local/lib/docker/cli-plugins
+        curl -fsSL \
+            "https://github.com/docker/compose/releases/download/${COMPOSE_VER}/docker-compose-linux-$(uname -m)" \
+            -o /usr/local/lib/docker/cli-plugins/docker-compose
+        chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+    }
+    ok "Docker Compose $(docker compose version --short 2>/dev/null) installed"
+else
+    ok "Docker Compose $(docker compose version --short 2>/dev/null) found"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. Storage tools
+# ---------------------------------------------------------------------------
+info "Installing storage tools..."
+
+for pkg in \
+    ntfs-3g exfat-fuse exfatprogs \
+    smartmontools \
+    parted gdisk fdisk \
+    e2fsprogs xfsprogs \
+    util-linux \
+    rsync \
+    nfs-common \
+    samba samba-common-bin \
+    fuse3; do
+    install_pkg "$pkg"
+done
+
+# snapraid — in Debian repos since Bullseye
+if pkg_installed snapraid; then
+    ok "snapraid already installed"
+elif apt-get install -y snapraid >/dev/null 2>&1; then
+    ok "snapraid installed"
+else
+    warn "snapraid not in repos for ${DEBIAN_CODENAME}/${SYS_ARCH} — install manually: https://www.snapraid.it"
+fi
+
+# mergerfs — NOT in standard repos, install from GitHub releases
+if pkg_installed mergerfs || command -v mergerfs &>/dev/null; then
+    ok "mergerfs already installed"
+else
+    info "Installing mergerfs from GitHub releases..."
+    MERGERFS_VER=$(curl -fsSL https://api.github.com/repos/trapexit/mergerfs/releases/latest \
+        | grep '"tag_name"' | head -1 | cut -d'"' -f4)
+    if [[ -n "$MERGERFS_VER" ]]; then
+        CANDIDATES=(
+            "mergerfs_${MERGERFS_VER}.debian-${DEBIAN_CODENAME}_${SYS_ARCH}.deb"
+            "mergerfs_${MERGERFS_VER}_debian-${DEBIAN_CODENAME}_${SYS_ARCH}.deb"
+            "mergerfs_${MERGERFS_VER}_${SYS_ARCH}.deb"
+        )
+        BASE_URL="https://github.com/trapexit/mergerfs/releases/download/${MERGERFS_VER}"
+        DOWNLOADED=0
+        for fname in "${CANDIDATES[@]}"; do
+            if curl -fsSL --head "${BASE_URL}/${fname}" -o /dev/null 2>/dev/null; then
+                curl -fsSL "${BASE_URL}/${fname}" -o /tmp/mergerfs.deb
+                dpkg -i /tmp/mergerfs.deb >/dev/null 2>&1
+                rm -f /tmp/mergerfs.deb
+                ok "mergerfs ${MERGERFS_VER} installed"
+                DOWNLOADED=1
+                break
+            fi
+        done
+        [[ $DOWNLOADED -eq 0 ]] && warn "mergerfs: no .deb for ${DEBIAN_CODENAME}/${SYS_ARCH} — install manually: https://github.com/trapexit/mergerfs/releases"
+    else
+        warn "mergerfs: could not fetch latest version from GitHub"
+    fi
+fi
+
+# apcupsd or nut (for UPS support — optional)
+install_pkg "apcupsd" 2>/dev/null || true
+
+ok "Storage tools done"
+
+# ---------------------------------------------------------------------------
+# 8. Sudoers — passwordless for NAS management commands
+# ---------------------------------------------------------------------------
+info "Configuring sudoers for NAS tools..."
+SUDOERS_FILE="/etc/sudoers.d/homepinas"
+cat > "$SUDOERS_FILE" << SUDOERS
+# HomePiNAS — passwordless sudo for NAS management tools
+# Generated by install.sh on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/sbin/smartctl
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/sgdisk
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/parted
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/sbin/parted
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/mkfs.ext4
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/mkfs.xfs
+${REAL_USER} ALL=(ALL) NOPASSWD: /bin/mount
+${REAL_USER} ALL=(ALL) NOPASSWD: /bin/umount
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/blkid
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/partprobe
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/sbin/badblocks
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/rsync
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/snapraid
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/mergerfs
+${REAL_USER} ALL=(ALL) NOPASSWD: /bin/cp
+${REAL_USER} ALL=(ALL) NOPASSWD: /bin/mkdir
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/fdisk
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/sbin/nmcli
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/systemctl
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/reboot
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/shutdown
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt
+${REAL_USER} ALL=(ALL) NOPASSWD: /usr/bin/apcaccess
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/mkswap
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/swapon
+${REAL_USER} ALL=(ALL) NOPASSWD: /sbin/swapoff
+SUDOERS
+chmod 0440 "$SUDOERS_FILE"
+visudo -c -f "$SUDOERS_FILE" >/dev/null 2>&1 && ok "Sudoers configured" || warn "Sudoers syntax error — check ${SUDOERS_FILE}"
+
+# ---------------------------------------------------------------------------
+# 9. Clone / update repository
+# ---------------------------------------------------------------------------
+STAGING_DIR="${INSTALL_DIR}.staging"
+
+if [[ -d "${INSTALL_DIR}/.git" ]]; then
+    info "Updating existing installation in ${INSTALL_DIR}..."
+    cd "$INSTALL_DIR"
+    git fetch origin "$BRANCH" --quiet
+    git reset --hard "origin/${BRANCH}" --quiet
+    ok "Updated to latest ($(git log -1 --format='%h %s'))"
+else
+    info "Cloning repository to ${INSTALL_DIR}..."
+    rm -rf "$STAGING_DIR"
+    git clone -b "$BRANCH" --depth 1 "$REPO_URL" "$STAGING_DIR" --quiet
+
+    # Preserve config and data from previous install if upgrading
+    if [[ -d "${INSTALL_DIR}/config" ]]; then
+        info "Preserving existing config..."
+        cp -a "${INSTALL_DIR}/config" "${STAGING_DIR}/config" 2>/dev/null || true
+    fi
+    if [[ -d "$INSTALL_DIR" ]]; then
+        mv "$INSTALL_DIR" "${INSTALL_DIR}.backup.$(date +%s)"
+        info "Previous install backed up"
+    fi
+    mv "$STAGING_DIR" "$INSTALL_DIR"
+    ok "Repository cloned to ${INSTALL_DIR}"
+fi
+
+cd "$INSTALL_DIR"
+
+# ---------------------------------------------------------------------------
+# 10. npm install (compiles better-sqlite3 and node-pty)
+# ---------------------------------------------------------------------------
+info "Installing Node.js dependencies (may take a few minutes — compiling native modules)..."
+npm install 2>&1 | grep -E "^(added|removed|changed|npm error|npm warn deprecated)" || true
+ok "Dependencies installed"
+
+# ---------------------------------------------------------------------------
+# 11. Required directories
+# ---------------------------------------------------------------------------
+info "Creating required directories..."
+
+mkdir -p \
+    "${INSTALL_DIR}/config" \
+    "${INSTALL_DIR}/backend/certs"
+
+# Storage dirs on NAS mount (only if /mnt/storage exists)
+for dir in /mnt/storage /mnt/storage/.tmp /mnt/storage/.uploads-tmp; do
+    if [[ "$dir" == "/mnt/storage" ]] || [[ -d /mnt/storage ]]; then
+        mkdir -p "$dir" 2>/dev/null || true
+    fi
+done
+
+# Ownership
+chown -R "${REAL_USER}:${REAL_USER}" "$INSTALL_DIR"
+for dir in /mnt/storage /mnt/cache /mnt/parity /mnt/disks; do
+    [[ -d "$dir" ]] && chown -R "${REAL_USER}:${REAL_USER}" "$dir" 2>/dev/null || true
+done
+
+ok "Directories ready"
+
+# ---------------------------------------------------------------------------
+# 12. Environment file
+# ---------------------------------------------------------------------------
+info "Setting up environment variables..."
+
+ENV_FILE="${INSTALL_DIR}/.env"
 
 if [[ -f "$ENV_FILE" ]]; then
-    ok ".env already exists — skipping (delete it to regenerate)"
+    ok ".env already exists — skipping (delete to regenerate)"
 else
-    echo "  Generating TOTP_SERVER_KEY..."
-    TOTP_KEY=$(openssl rand -hex 32 2>/dev/null || node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))")
+    TOTP_KEY=$(openssl rand -hex 32 2>/dev/null \
+        || node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))")
 
-    cat > "$ENV_FILE" <<EOF
-# HomePiNAS Dashboard — Environment Configuration
+    cat > "$ENV_FILE" << EOF
+# HomePiNAS Dashboard v${APP_VERSION} — Environment Configuration
 # Generated by install.sh on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # DO NOT COMMIT THIS FILE
 
-# Server ports
+# Server ports (80/443 require running as root or CAP_NET_BIND_SERVICE)
 HTTPS_PORT=443
 HTTP_PORT=80
 
 # Session settings (milliseconds)
-SESSION_DURATION=86400000        # 24 hours
-SESSION_IDLE_TIMEOUT=3600000     # 1 hour
+SESSION_DURATION=86400000       # 24 hours
+SESSION_IDLE_TIMEOUT=3600000    # 1 hour
 
 # Health monitor thresholds
-TEMP_THRESHOLD_C=75              # Disk temperature alert (°C)
-POOL_USAGE_THRESHOLD=85          # Storage pool usage alert (%)
+TEMP_THRESHOLD_C=75             # Disk temperature alert (°C)
+POOL_USAGE_THRESHOLD=85         # Storage pool usage alert (%)
 
-# TOTP secret encryption key (AES-256-GCM)
-# KEEP SECRET — rotating this key invalidates all existing 2FA registrations
+# TOTP secret encryption key (AES-256-GCM, 32 bytes hex)
+# KEEP SECRET — rotating invalidates all existing 2FA registrations
 TOTP_SERVER_KEY=${TOTP_KEY}
 
-# Logging
-LOG_LEVEL=info
+# Runtime
 NODE_ENV=production
+LOG_LEVEL=info
 EOF
 
     chmod 600 "$ENV_FILE"
-    ok ".env created at ${ENV_FILE}"
-    warn "TOTP_SERVER_KEY generated — back it up securely, losing it invalidates all 2FA"
+    chown "${REAL_USER}:${REAL_USER}" "$ENV_FILE"
+    ok ".env created"
+    warn "TOTP_SERVER_KEY generated — back it up, losing it invalidates all 2FA"
 fi
 
 # ---------------------------------------------------------------------------
-# 7. SSL Certificates
+# 13. SSL certificates
 # ---------------------------------------------------------------------------
-step "Setting up SSL certificates"
+info "Setting up SSL certificates..."
 
-CERT_PATH="${PROJECT_ROOT}/backend/certs/server.crt"
-KEY_PATH="${PROJECT_ROOT}/backend/certs/server.key"
+CERT_PATH="${INSTALL_DIR}/backend/certs/server.crt"
+KEY_PATH="${INSTALL_DIR}/backend/certs/server.key"
 
 if [[ -f "$CERT_PATH" && -f "$KEY_PATH" ]]; then
-    ok "SSL certificates already present — skipping"
-    CERT_EXPIRY=$(openssl x509 -enddate -noout -in "$CERT_PATH" 2>/dev/null | cut -d= -f2 || echo "unknown")
-    ok "Certificate expires: ${CERT_EXPIRY}"
-elif [[ "$HAS_OPENSSL" -eq 1 ]]; then
-    echo "  Generating self-signed certificate..."
+    EXPIRY=$(openssl x509 -enddate -noout -in "$CERT_PATH" 2>/dev/null | cut -d= -f2 || echo "unknown")
+    ok "SSL certificates already present (expires: ${EXPIRY})"
+elif command -v openssl &>/dev/null; then
     HOSTNAME=$(hostname)
     LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K[^ ]+' || echo "127.0.0.1")
-
-    SSL_CNF_DIR="${PROJECT_ROOT}/backend/certs"
-    SSL_CNF="${SSL_CNF_DIR}/openssl.cnf"
-
-    cat > "$SSL_CNF" <<EOF
+    SSL_CNF="/tmp/homepinas-ssl.cnf"
+    cat > "$SSL_CNF" << SSLCONF
 [req]
 distinguished_name = req_distinguished_name
 x509_extensions = v3_req
@@ -250,152 +404,137 @@ DNS.2 = homepinas.local
 DNS.3 = localhost
 IP.1 = ${LOCAL_IP}
 IP.2 = 127.0.0.1
-EOF
+SSLCONF
 
     openssl req -x509 -nodes -days 3650 \
         -newkey rsa:2048 \
         -keyout "$KEY_PATH" \
         -out "$CERT_PATH" \
-        -config "$SSL_CNF" \
-        2>/dev/null
-
+        -config "$SSL_CNF" 2>/dev/null
     chmod 600 "$KEY_PATH"
+    chown -R "${REAL_USER}:${REAL_USER}" "${INSTALL_DIR}/backend/certs"
     rm -f "$SSL_CNF"
-    ok "Self-signed certificate generated (valid 10 years)"
-    ok "  Hostname: ${HOSTNAME}"
-    ok "  IP: ${LOCAL_IP}"
-    warn "Browser will show a security warning — this is expected for self-signed certs"
-    warn "To avoid it: install the cert in your browser/OS trust store, or use Let's Encrypt"
+    ok "Self-signed certificate generated (10 years, CN=${HOSTNAME}, IP=${LOCAL_IP})"
+    warn "Browser will show a security warning — expected for self-signed certs"
 else
-    warn "openssl not found — SSL cert generation skipped"
-    warn "The server will auto-generate a cert on first start if openssl is available then"
+    warn "openssl not found — certificate will be auto-generated on first server start"
 fi
 
 # ---------------------------------------------------------------------------
-# 8. TypeScript type check
+# 14. Systemd service
 # ---------------------------------------------------------------------------
-step "Running TypeScript type check"
+info "Installing systemd service..."
 
-if npm run typecheck 2>&1 | tail -3 | grep -q "error TS"; then
-    error "TypeScript errors found — install may be incomplete"
-    npm run typecheck 2>&1 | grep "error TS" | head -10
-    warn "Continuing anyway — check errors before starting the server"
-else
-    ok "TypeScript: 0 errors"
-fi
-
-# ---------------------------------------------------------------------------
-# 9. Tests
-# ---------------------------------------------------------------------------
-step "Running tests"
-
-TEST_OUTPUT=$(npm test 2>&1 | tail -5)
-if echo "$TEST_OUTPUT" | grep -q "failed"; then
-    FAILED=$(echo "$TEST_OUTPUT" | grep -oP '\d+ failed')
-    warn "Tests: ${FAILED} — check output above"
-    npm test 2>&1 | grep "×" | head -10 || true
-else
-    PASSED=$(echo "$TEST_OUTPUT" | grep -oP '\d+ passed' | head -1)
-    ok "Tests: ${PASSED:-all passing}"
-fi
-
-# ---------------------------------------------------------------------------
-# 10. Systemd service (optional)
-# ---------------------------------------------------------------------------
-step "Systemd service setup"
-
-SERVICE_FILE="/etc/systemd/system/homepinas.service"
-INSTALL_USER="${SUDO_USER:-$(whoami)}"
 NODE_BIN=$(command -v node)
-NPM_BIN=$(command -v npm)
+TSX_BIN="${INSTALL_DIR}/node_modules/.bin/tsx"
 
-if [[ ! -f "$SERVICE_FILE" ]]; then
-    echo ""
-    read -rp "  Install systemd service (auto-start on boot)? [y/N] " INSTALL_SERVICE
-    INSTALL_SERVICE="${INSTALL_SERVICE:-n}"
-else
-    ok "Systemd service already installed at ${SERVICE_FILE}"
-    INSTALL_SERVICE="n"
-fi
-
-if [[ "$INSTALL_SERVICE" =~ ^[Yy]$ ]]; then
-    if [[ $EUID -ne 0 && -z "$SUDO" ]]; then
-        warn "Cannot install systemd service without root/sudo — skipping"
-    else
-        cat > /tmp/homepinas.service <<EOF
+cat > "/etc/systemd/system/${SERVICE_NAME}.service" << SERVICE
 [Unit]
-Description=HomePiNAS Dashboard
+Description=HomePiNAS Dashboard v${APP_VERSION}
 Documentation=https://github.com/juanlusoft/homepinas-dashboard
-After=network.target
-Wants=network-online.target
+After=network-online.target docker.service
+Wants=network-online.target docker.service
 
 [Service]
 Type=simple
-User=${INSTALL_USER}
-WorkingDirectory=${PROJECT_ROOT}
+User=${REAL_USER}
+Group=${REAL_USER}
+WorkingDirectory=${INSTALL_DIR}
 EnvironmentFile=${ENV_FILE}
-ExecStart=${NPM_BIN} start
+ExecStart=${TSX_BIN} ${INSTALL_DIR}/backend/index.ts
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=homepinas
 
-# Hardening
-NoNewPrivileges=yes
+# Allow binding to ports < 1024
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Hardening (light — smartctl/parted need elevated paths)
+NoNewPrivileges=no
 PrivateTmp=yes
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=${PROJECT_ROOT}/config ${PROJECT_ROOT}/backend/certs /mnt/storage
+ReadWritePaths=${INSTALL_DIR}/config ${INSTALL_DIR}/backend/certs /mnt/storage /mnt/cache /mnt/parity /mnt/disks /tmp
 
 [Install]
 WantedBy=multi-user.target
-EOF
+SERVICE
 
-        $SUDO mv /tmp/homepinas.service "$SERVICE_FILE"
-        $SUDO systemctl daemon-reload
-        $SUDO systemctl enable homepinas
-        ok "Service installed and enabled"
-        ok "  Start:   sudo systemctl start homepinas"
-        ok "  Stop:    sudo systemctl stop homepinas"
-        ok "  Logs:    sudo journalctl -u homepinas -f"
-    fi
+systemctl daemon-reload
+systemctl enable "$SERVICE_NAME"
+ok "Service installed and enabled"
+
+# ---------------------------------------------------------------------------
+# 15. Type check + tests (smoke check)
+# ---------------------------------------------------------------------------
+info "Running TypeScript smoke check..."
+cd "$INSTALL_DIR"
+if su -c "cd '${INSTALL_DIR}' && npm run typecheck 2>&1 | tail -1" "$REAL_USER" 2>/dev/null | grep -q "error TS"; then
+    warn "TypeScript errors detected — run 'npm run typecheck' to investigate"
 else
-    ok "Skipped systemd service — start manually with: npm start"
+    ok "TypeScript: clean"
+fi
+
+info "Running tests..."
+TEST_RESULT=$(su -c "cd '${INSTALL_DIR}' && npm test 2>&1 | tail -3" "$REAL_USER" 2>/dev/null || echo "")
+if echo "$TEST_RESULT" | grep -q "failed"; then
+    warn "Some tests failed — run 'npm test' to investigate"
+else
+    PASSED=$(echo "$TEST_RESULT" | grep -oP '\d+ passed' | head -1)
+    ok "Tests: ${PASSED:-all passing}"
+fi
+
+# ---------------------------------------------------------------------------
+# 16. Start service
+# ---------------------------------------------------------------------------
+info "Starting HomePiNAS service..."
+systemctl restart "$SERVICE_NAME"
+sleep 4
+
+if systemctl is-active --quiet "$SERVICE_NAME"; then
+    ok "Service started successfully"
+else
+    warn "Service may not have started — check: journalctl -u ${SERVICE_NAME} -f"
 fi
 
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
-LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K[^ ]+' || echo "localhost")
+LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 HOSTNAME=$(hostname)
 
 echo ""
-echo -e "${GRN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
-echo -e "${GRN}  Installation complete!${RST}"
-echo -e "${GRN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RST}"
+echo -e "${GRN}╔══════════════════════════════════════════════════════╗${NC}"
+echo -e "${GRN}║   HomePiNAS Dashboard v${APP_VERSION} installed!            ║${NC}"
+echo -e "${GRN}╠══════════════════════════════════════════════════════╣${NC}"
+echo -e "${GRN}║${NC}                                                      "
+echo -e "${GRN}║${NC}   ${CYN}Access:${NC}                                           "
+echo -e "${GRN}║${NC}     https://${LOCAL_IP}                               "
+echo -e "${GRN}║${NC}     https://${HOSTNAME}.local                      "
+echo -e "${GRN}║${NC}                                                      "
+echo -e "${GRN}║${NC}   ${CYN}Service:${NC}                                          "
+echo -e "${GRN}║${NC}     sudo systemctl status ${SERVICE_NAME}               "
+echo -e "${GRN}║${NC}     sudo journalctl -u ${SERVICE_NAME} -f              "
+echo -e "${GRN}║${NC}                                                      "
+echo -e "${GRN}║${NC}   ${CYN}Files:${NC}                                            "
+echo -e "${GRN}║${NC}     Install:  ${INSTALL_DIR}/                        "
+echo -e "${GRN}║${NC}     Env:      ${ENV_FILE}                "
+echo -e "${GRN}║${NC}     Certs:    ${INSTALL_DIR}/backend/certs/         "
+echo -e "${GRN}║${NC}     Config:   ${INSTALL_DIR}/config/                "
+echo -e "${GRN}║${NC}                                                      "
+echo -e "${GRN}╚══════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  ${CYN}Start the server:${RST}"
-echo    "    npm start"
-echo    "    — or —"
-echo    "    sudo systemctl start homepinas   (if service installed)"
+echo -e "  ${YLW}⚠  Browser will show a security warning for the self-signed cert.${NC}"
+echo -e "     Click 'Advanced → Proceed' or install the cert in your trust store."
 echo ""
-echo -e "  ${CYN}Access the dashboard:${RST}"
-echo    "    https://${LOCAL_IP}"
-echo    "    https://${HOSTNAME}.local"
-echo    "    https://localhost"
-echo ""
-echo -e "  ${CYN}Important files:${RST}"
-echo    "    .env                  ← environment variables (keep secret)"
-echo    "    config/data.json      ← app data (created on first start)"
-echo    "    backend/certs/        ← SSL certificates"
-echo ""
-echo -e "  ${YLW}⚠  Note: the browser will show a security warning for the${RST}"
-echo -e "  ${YLW}   self-signed certificate. Click 'Advanced → Proceed'.${RST}"
-echo ""
-if ! [[ -d "${PROJECT_ROOT}/backend/routes" ]]; then
-    echo -e "  ${RED}⚠  backend/routes/ is missing — API endpoints will fail to load.${RST}"
-    echo -e "     This directory contains the route modules (/api/system, /api/storage, etc.)"
-    echo -e "     and must be present for the server to function fully."
+if [[ ! -d "${INSTALL_DIR}/backend/routes" ]]; then
+    echo -e "  ${RED}⚠  backend/routes/ is not present in this installation.${NC}"
+    echo     "     API endpoints (/api/*) require route modules in that directory."
+    echo     "     The server will start but most features will not be functional."
     echo ""
 fi
+echo -e "  ${CYN}Re-login or run 'newgrp docker' to use Docker without sudo.${NC}"
+echo ""
