@@ -230,4 +230,188 @@ router.get('/snapraid/sync/progress', requireAuth, (req, res) => {
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CACHE STATUS  GET /cache/status
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/cache/status', requireAuth, async (req, res) => {
+    try {
+        const data = getData();
+        const cfg  = data.storageConfig || {};
+
+        const allDisks   = Array.isArray(cfg.disks) ? cfg.disks : [];
+        const cacheDisks = allDisks.filter(d => d.role === 'cache');
+        const hasCache   = cacheDisks.length > 0;
+
+        let fileCounts = 0;
+        const cacheMount = cfg.cacheMount || '/mnt/cache';
+        if (hasCache) {
+            try {
+                const { stdout } = await safeExec('find', [cacheMount, '-maxdepth', '1', '-type', 'f']);
+                fileCounts = stdout.trim().split('\n').filter(Boolean).length;
+            } catch {
+                fileCounts = 0;
+            }
+        }
+
+        return res.json({
+            hasCache,
+            cacheDisks: cacheDisks.map(d => d.id),
+            fileCounts,
+            policy: cfg.cachePolicy || 'auto',
+            mover:  cfg.cacheMoverEnabled || false
+        });
+    } catch (err) {
+        log.error('[storage] cache/status error:', err.message);
+        return res.status(500).json({ error: 'Failed to get cache status' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CACHE MOVE NOW  POST /move-now
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/move-now', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const data       = getData();
+        const cfg        = data.storageConfig || {};
+        const cacheMount = cfg.cacheMount || '/mnt/cache';
+        const poolMount  = cfg.poolMount   || '/mnt/storage';
+
+        (async () => {
+            try {
+                await safeExec('rsync', ['-a', '--remove-source-files', `${cacheMount}/`, `${poolMount}/`]);
+                log.info('[storage] Cache mover completed');
+            } catch (err) {
+                log.error('[storage] Cache mover error:', err.message);
+            }
+        })();
+
+        return res.json({ message: 'Cache mover started' });
+    } catch (err) {
+        log.error('[storage] move-now error:', err.message);
+        return res.status(500).json({ error: 'Failed to start cache mover' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DISK HEALTH  GET /disks/health
+// ─────────────────────────────────────────────────────────────────────────────
+
+function parseSmartAttributes(smart) {
+    const attrs   = smart.ata_smart_attributes?.table || [];
+    const findAttr = (id) => attrs.find(a => a.id === id);
+
+    const reallocAttr   = findAttr(5);
+    const pendingAttr   = findAttr(197);
+    const ssdLifeAttr   = findAttr(231);
+    const tempAttr      = findAttr(194);
+    const powerOnAttr   = findAttr(9);
+
+    return {
+        reallocatedSectors: reallocAttr   ? reallocAttr.raw.value   : 0,
+        pendingSectors:     pendingAttr   ? pendingAttr.raw.value   : 0,
+        ssdLifeLeft:        ssdLifeAttr   ? ssdLifeAttr.raw.value   : null,
+        temperature:        tempAttr      ? tempAttr.raw.value
+                                         : (smart.temperature?.current ?? null),
+        powerOnHours:       powerOnAttr   ? powerOnAttr.raw.value   : null,
+        smartPassed:        smart.smart_status ? smart.smart_status.passed : null,
+        model:              smart.model_name   || null
+    };
+}
+
+router.get('/disks/health', requireAuth, async (req, res) => {
+    try {
+        const lsblkResult = await safeExec('lsblk', ['-J', '-o', 'NAME,TYPE']);
+        const lsblk       = JSON.parse(lsblkResult.stdout);
+        const physicalDisks = (lsblk.blockdevices || [])
+            .filter(d => d.type === 'disk' && !/^(loop|zram|ram)/.test(d.name));
+
+        const disks = [];
+        for (const device of physicalDisks) {
+            const diskId = sanitizeDiskId(device.name);
+            if (!diskId) continue;
+
+            let smartData = null;
+            try {
+                const { stdout } = await safeExec('smartctl', ['-A', '-j', `/dev/${diskId}`]);
+                smartData = JSON.parse(stdout);
+            } catch (e) {
+                if (e.stdout) {
+                    try { smartData = JSON.parse(e.stdout); } catch {}
+                }
+            }
+
+            const attrs = smartData ? parseSmartAttributes(smartData) : {};
+            disks.push({ diskId, ...attrs });
+        }
+
+        const hasWarning  = disks.some(d => d.reallocatedSectors > 0 || d.pendingSectors > 0);
+        const hasCritical = disks.some(d => d.smartPassed === false);
+        const summary     = hasCritical ? 'critical' : hasWarning ? 'warning' : 'healthy';
+
+        return res.json({ summary, disks });
+    } catch (err) {
+        log.error('[storage] disks/health error:', err.message);
+        return res.status(500).json({ error: 'Failed to get disk health' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IO STATS  GET /disks/iostats
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/disks/iostats', requireAuth, async (req, res) => {
+    try {
+        const { stdout } = await safeExec('cat', ['/proc/diskstats']);
+        const result = {};
+        const lines  = stdout.split('\n');
+        for (const line of lines) {
+            const cols = line.trim().split(/\s+/);
+            if (cols.length < 14) continue;
+            const name = cols[2];
+            if (/[0-9]$/.test(name) || /^(loop|ram|zram)/.test(name)) continue;
+            const readSectors  = parseInt(cols[5],  10) || 0;
+            const writeSectors = parseInt(cols[9],  10) || 0;
+            result[name] = {
+                read:  readSectors  * 512,
+                write: writeSectors * 512
+            };
+        }
+        return res.json(result);
+    } catch (err) {
+        log.error('[storage] disks/iostats error:', err.message);
+        return res.status(500).json({ error: 'Failed to get IO stats' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REMOVE FROM POOL  POST /disks/remove-from-pool
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/disks/remove-from-pool', requireAuth, requirePermission('admin'), async (req, res) => {
+    try {
+        const rawId = req.body.diskId;
+        const diskId = sanitizeDiskId(rawId);
+        if (!diskId) {
+            return res.status(400).json({ error: 'Invalid disk ID' });
+        }
+
+        await withData(data => {
+            const cfg = data.storageConfig || {};
+            if (Array.isArray(cfg.disks)) {
+                cfg.disks = cfg.disks.filter(d => d.id !== diskId);
+            }
+            data.storageConfig = cfg;
+            return data;
+        });
+
+        log.info(`[storage] Removed ${diskId} from pool config`);
+        return res.json({ success: true, message: `Disk ${diskId} removed from pool` });
+    } catch (err) {
+        log.error('[storage] remove-from-pool error:', err.message);
+        return res.status(500).json({ error: 'Failed to remove disk from pool' });
+    }
+});
+
 module.exports = router;
