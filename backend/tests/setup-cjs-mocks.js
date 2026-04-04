@@ -44,6 +44,10 @@ const ROUTE_FILES = [
     path.resolve(SETUP_DIR, '../routes/auth.js'),
     path.resolve(SETUP_DIR, '../routes/users.js'),
     path.resolve(SETUP_DIR, '../routes/totp.js'),
+    path.resolve(SETUP_DIR, '../routes/system.js'),
+    path.resolve(SETUP_DIR, '../routes/power.js'),
+    path.resolve(SETUP_DIR, '../routes/update.js'),
+    path.resolve(SETUP_DIR, '../routes/network.js'),
 ];
 
 /**
@@ -101,9 +105,14 @@ const ALL_MOCK_CANDIDATES = [
     '../sanitize',
     '../totp-crypto',
     '../auth',
+    '../rbac',
+    '../security',
+    '../logger',
     'bcryptjs',
     'otplib',
     'qrcode',
+    'os',
+    'fs',
 ];
 
 beforeEach(async () => {
