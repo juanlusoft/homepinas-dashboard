@@ -98,13 +98,13 @@ async function _applyHandler(req, res) {
         res.json({ success: true, message: 'Update applied. Service restarting.' });
     } catch (err) {
         log.error('[update/apply] Error:', err.message);
-        res.status(500).json({ error: 'Failed to apply update: ' + err.message });
+        res.status(500).json({ error: 'Failed to apply update' });
     }
 }
 
 async function _checkOsHandler(req, res) {
     try {
-        const { stdout } = await sudoExec('apt-get', ['--dry-run', '-s', 'upgrade']);
+        const { stdout } = await sudoExec('apt-get', ['-s', 'upgrade']);
         const { packages, securityUpdates } = parseAptOutput(stdout);
         res.json({
             updatesAvailable: packages.length > 0,
@@ -123,7 +123,7 @@ async function _applyOsHandler(req, res) {
         res.json({ success: true });
     } catch (err) {
         log.error('[update/apply-os] Error:', err.message);
-        res.status(500).json({ error: 'Failed to apply OS updates: ' + err.message });
+        res.status(500).json({ error: 'Failed to apply OS updates' });
     }
 }
 

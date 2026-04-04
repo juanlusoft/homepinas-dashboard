@@ -184,10 +184,10 @@ async function _dashboardUpdatesHandler(req, res) {
                 return bm - am || bn - an || bp - ap;
             })[0] || currentVersion;
 
-        const updateAvailable = latestVersion !== currentVersion &&
+        const hasUpdate = latestVersion !== currentVersion &&
             latestVersion.replace(/^v/, '') !== currentVersion.replace(/^v/, '');
 
-        res.json({ updateAvailable, latestVersion, currentVersion });
+        res.json({ hasUpdate, latestVersion, currentVersion });
     } catch (err) {
         log.error('[system/dashboard-updates] Error:', err.message);
         res.status(500).json({ error: 'Failed to check for updates' });
