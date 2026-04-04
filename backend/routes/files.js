@@ -9,7 +9,7 @@ const os       = require('os');
 const multer   = require('multer');
 
 const { safeExec }                      = require('../security');
-const { sanitizePath, sanitizeString }  = require('../sanitize');
+const { sanitizePath }                  = require('../sanitize');
 const { requireAuth }                   = require('../auth');
 const { requirePermission }             = require('../rbac');
 const { getData }                       = require('../data');
@@ -101,8 +101,8 @@ router.get('/download', requireAuth, async (req, res) => {
         return res.status(500).json({ error: 'Failed to access file' });
     }
 
-    const filename = path.basename(safePath);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    const safeFilename = path.basename(safePath).replace(/["\r\n]/g, '_');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
     const stream = fs.createReadStream(safePath);
     stream.on('error', streamErr => {
         log.error('[files] download stream error:', streamErr.message);
@@ -133,11 +133,11 @@ router.post('/upload', requireAuth, requirePermission('write'), upload.array('fi
             } catch (moveErr) {
                 log.error('[files] upload move error:', moveErr.message);
                 fsp.unlink(file.path).catch(() => {});
-                errors.push({ name: safeName, error: moveErr.message });
+                errors.push({ name: safeName, error: 'Failed to save file' });
             }
         }
         if (errors.length > 0 && moved.length === 0) {
-            return res.status(500).json({ error: 'All uploads failed', details: errors });
+            return res.status(500).json({ error: 'All uploads failed', failedFiles: errors.map(e => e.name) });
         }
         return res.json({ success: true, uploaded: moved, errors: errors.length > 0 ? errors : undefined });
     } catch (err) {
