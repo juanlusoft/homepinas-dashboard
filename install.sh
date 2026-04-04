@@ -88,7 +88,7 @@ ok "Package lists updated"
 # 4. Core build tools
 # ---------------------------------------------------------------------------
 info "Installing build essentials..."
-for pkg in build-essential python3 git curl openssl ca-certificates gnupg; do
+for pkg in build-essential python3 git curl openssl ca-certificates gnupg unzip; do
     install_pkg "$pkg"
 done
 
@@ -275,20 +275,25 @@ if [[ -d "${INSTALL_DIR}/.git" ]]; then
     git reset --hard "origin/${BRANCH}" --quiet
     ok "Updated to latest ($(git log -1 --format='%h %s'))"
 else
-    info "Cloning repository to ${INSTALL_DIR}..."
-    rm -rf "$STAGING_DIR"
-    git config --global http.postBuffer 524288000
-    CLONE_OK=0
+    info "Downloading repository to ${INSTALL_DIR}..."
+    ZIP_URL="https://github.com/juanlusoft/homepinas-dashboard/archive/refs/heads/${BRANCH}.zip"
+    ZIP_FILE="/tmp/homepinas-download.zip"
+    DOWNLOAD_OK=0
     for attempt in 1 2 3; do
-        if git clone -b "$BRANCH" --depth 1 "$REPO_URL" "$STAGING_DIR"; then
-            CLONE_OK=1
+        if curl -fsSL --retry 3 --retry-delay 5 "$ZIP_URL" -o "$ZIP_FILE"; then
+            DOWNLOAD_OK=1
             break
         fi
-        warn "Clone attempt $attempt failed — retrying in 5s..."
-        rm -rf "$STAGING_DIR"
+        warn "Download attempt $attempt failed — retrying in 5s..."
         sleep 5
     done
-    [[ $CLONE_OK -eq 1 ]] || error "Failed to clone repository after 3 attempts"
+    [[ $DOWNLOAD_OK -eq 1 ]] || error "Failed to download repository after 3 attempts"
+
+    info "Extracting..."
+    unzip -q "$ZIP_FILE" -d /tmp/homepinas-extract
+    rm -f "$ZIP_FILE"
+    mv /tmp/homepinas-extract/homepinas-dashboard-${BRANCH} "$STAGING_DIR"
+    rm -rf /tmp/homepinas-extract
 
     # Preserve config and data from previous install if upgrading
     if [[ -d "${INSTALL_DIR}/config" ]]; then
