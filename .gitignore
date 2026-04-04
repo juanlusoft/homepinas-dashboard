@@ -46,3 +46,6 @@ desktop.ini
 
 # TypeScript
 *.tsbuildinfo
+
+# Git worktrees
+.worktrees/
