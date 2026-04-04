@@ -241,4 +241,219 @@ router.post('/update', requireAuth, requirePermission('write'), async (req, res)
     }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE LIST  GET /compose/list
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/compose/list', requireAuth, async (req, res) => {
+    try {
+        await ensureComposeDir();
+        const entries = await fs.readdir(COMPOSE_DIR, { withFileTypes: true });
+        const files   = [];
+        for (const entry of entries) {
+            if (!entry.isFile()) continue;
+            if (!/\.(yml|yaml)$/.test(entry.name)) continue;
+            const stat = await fs.stat(path.join(COMPOSE_DIR, entry.name));
+            const name = entry.name.replace(/\.(yml|yaml)$/, '');
+            files.push({ name, modified: stat.mtime.toISOString() });
+        }
+        files.sort((a, b) => a.name.localeCompare(b.name));
+        return res.json(files);
+    } catch (err) {
+        log.error('[docker] compose/list error:', err.message);
+        return res.status(500).json({ error: 'Failed to list compose files' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE IMPORT  POST /compose/import
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/compose/import', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const { name, content } = req.body;
+
+        const safeName = sanitizeComposeName(name);
+        if (!safeName) {
+            return res.status(400).json({ error: 'Invalid compose file name (alphanumeric, hyphens, underscores; max 50 chars)' });
+        }
+
+        const validation = validateComposeContent(content);
+        if (!validation.valid) {
+            return res.status(400).json({ error: validation.error });
+        }
+
+        await ensureComposeDir();
+        const filePath = path.join(COMPOSE_DIR, `${safeName}.yml`);
+        await fs.writeFile(filePath, content, { encoding: 'utf8', mode: 0o600 });
+
+        log.info(`[docker] Compose file imported: ${safeName}`);
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[docker] compose/import error:', err.message);
+        return res.status(500).json({ error: 'Failed to import compose file' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE UP  POST /compose/up
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/compose/up', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const safeName = sanitizeComposeName(req.body.name);
+        if (!safeName) {
+            return res.status(400).json({ error: 'Invalid compose name' });
+        }
+
+        const filePath = path.join(COMPOSE_DIR, `${safeName}.yml`);
+        try { await fs.access(filePath); } catch {
+            return res.status(404).json({ error: 'Compose file not found' });
+        }
+
+        const result = await safeExec('docker', ['compose', '-f', filePath, 'up', '-d']);
+        log.info(`[docker] compose up: ${safeName}`);
+        return res.json({ success: true, output: result.stdout || result.stderr || '' });
+    } catch (err) {
+        log.error('[docker] compose/up error:', err.message);
+        return res.status(500).json({ error: `compose up failed: ${err.message}` });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE DOWN  POST /compose/down
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/compose/down', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const safeName = sanitizeComposeName(req.body.name);
+        if (!safeName) {
+            return res.status(400).json({ error: 'Invalid compose name' });
+        }
+
+        const filePath = path.join(COMPOSE_DIR, `${safeName}.yml`);
+        try { await fs.access(filePath); } catch {
+            return res.status(404).json({ error: 'Compose file not found' });
+        }
+
+        await safeExec('docker', ['compose', '-f', filePath, 'down']);
+        log.info(`[docker] compose down: ${safeName}`);
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[docker] compose/down error:', err.message);
+        return res.status(500).json({ error: `compose down failed: ${err.message}` });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE GET  GET /compose/:name
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/compose/:name', requireAuth, async (req, res) => {
+    try {
+        const safeName = sanitizeComposeName(req.params.name);
+        if (!safeName) {
+            return res.status(400).json({ error: 'Invalid compose name' });
+        }
+
+        const filePath = path.join(COMPOSE_DIR, `${safeName}.yml`);
+        let content;
+        try {
+            content = await fs.readFile(filePath, 'utf8');
+        } catch {
+            return res.status(404).json({ error: 'Compose file not found' });
+        }
+
+        return res.json({ content });
+    } catch (err) {
+        log.error('[docker] compose get error:', err.message);
+        return res.status(500).json({ error: 'Failed to read compose file' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE PUT  PUT /compose/:name
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.put('/compose/:name', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const safeName = sanitizeComposeName(req.params.name);
+        if (!safeName) {
+            return res.status(400).json({ error: 'Invalid compose name' });
+        }
+
+        const { content } = req.body;
+        const validation  = validateComposeContent(content);
+        if (!validation.valid) {
+            return res.status(400).json({ error: validation.error });
+        }
+
+        await ensureComposeDir();
+        const filePath = path.join(COMPOSE_DIR, `${safeName}.yml`);
+        await fs.writeFile(filePath, content, { encoding: 'utf8', mode: 0o600 });
+
+        log.info(`[docker] Compose file updated: ${safeName}`);
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[docker] compose put error:', err.message);
+        return res.status(500).json({ error: 'Failed to update compose file' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSE DELETE  DELETE /compose/:name
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.delete('/compose/:name', requireAuth, requirePermission('delete'), async (req, res) => {
+    try {
+        const safeName = sanitizeComposeName(req.params.name);
+        if (!safeName) {
+            return res.status(400).json({ error: 'Invalid compose name' });
+        }
+
+        const filePath = path.join(COMPOSE_DIR, `${safeName}.yml`);
+        try { await fs.access(filePath); } catch {
+            return res.status(404).json({ error: 'Compose file not found' });
+        }
+
+        await fs.unlink(filePath);
+        log.info(`[docker] Compose file deleted: ${safeName}`);
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[docker] compose delete error:', err.message);
+        return res.status(500).json({ error: 'Failed to delete compose file' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTAINER NOTES  POST /containers/:id/notes
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/containers/:id/notes', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const { id }    = req.params;
+        const { notes } = req.body;
+
+        if (!validateContainerId(id)) {
+            return res.status(400).json({ error: 'Invalid container ID' });
+        }
+
+        if (typeof notes !== 'string' || notes.length > 2000) {
+            return res.status(400).json({ error: 'notes must be a string (max 2000 chars)' });
+        }
+
+        const shortId = id.slice(0, 12);
+        await withData(data => {
+            data.containerNotes        = data.containerNotes || {};
+            data.containerNotes[shortId] = notes;
+            return data;
+        });
+
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[docker] container notes error:', err.message);
+        return res.status(500).json({ error: 'Failed to save notes' });
+    }
+});
+
 module.exports = router;
