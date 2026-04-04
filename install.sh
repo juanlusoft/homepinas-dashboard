@@ -279,17 +279,17 @@ else
     info "Cloning repository to ${INSTALL_DIR}..."
     rm -rf "$STAGING_DIR"
     git config --global http.postBuffer 524288000
-    local attempt=0
-    while [[ $attempt -lt 3 ]]; do
-        attempt=$((attempt + 1))
+    CLONE_OK=0
+    for attempt in 1 2 3; do
         if git clone -b "$BRANCH" --depth 1 "$REPO_URL" "$STAGING_DIR"; then
+            CLONE_OK=1
             break
         fi
         warn "Clone attempt $attempt failed — retrying in 5s..."
         rm -rf "$STAGING_DIR"
         sleep 5
     done
-    [[ -d "$STAGING_DIR/.git" ]] || error "Failed to clone repository after 3 attempts"
+    [[ $CLONE_OK -eq 1 ]] || error "Failed to clone repository after 3 attempts"
 
     # Preserve config and data from previous install if upgrading
     if [[ -d "${INSTALL_DIR}/config" ]]; then
