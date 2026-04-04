@@ -184,10 +184,10 @@ async function _dashboardUpdatesHandler(req, res) {
                 return bm - am || bn - an || bp - ap;
             })[0] || currentVersion;
 
-        const hasUpdate = latestVersion !== currentVersion &&
+        const updateAvailable = latestVersion !== currentVersion &&
             latestVersion.replace(/^v/, '') !== currentVersion.replace(/^v/, '');
 
-        res.json({ hasUpdate, latestVersion, currentVersion });
+        res.json({ updateAvailable, latestVersion, currentVersion });
     } catch (err) {
         log.error('[system/dashboard-updates] Error:', err.message);
         res.status(500).json({ error: 'Failed to check for updates' });
@@ -223,7 +223,7 @@ async function _osUpdatesHandler(req, res) {
 
 async function _applyOsUpdatesHandler(req, res) {
     try {
-        await sudoExec('apt-get', ['-y', 'upgrade']);
+        await sudoExec('apt-get', ['-y', '--no-install-recommends', 'upgrade']);
         res.json({ success: true });
     } catch (err) {
         log.error('[system/apply-os-updates] Error:', err.message);
