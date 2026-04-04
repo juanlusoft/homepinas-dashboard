@@ -311,7 +311,7 @@ function parseSmartAttributes(smart) {
     return {
         reallocatedSectors: reallocAttr   ? reallocAttr.raw.value   : 0,
         pendingSectors:     pendingAttr   ? pendingAttr.raw.value   : 0,
-        ssdLifeLeft:        ssdLifeAttr   ? ssdLifeAttr.raw.value   : null,
+        ssdLife:            ssdLifeAttr   ? ssdLifeAttr.raw.value   : null,
         temperature:        tempAttr      ? tempAttr.raw.value
                                          : (smart.temperature?.current ?? null),
         powerOnHours:       powerOnAttr   ? powerOnAttr.raw.value   : null,
