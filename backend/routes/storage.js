@@ -557,4 +557,138 @@ router.delete('/badblocks/:diskId', requireAuth, requirePermission('admin'), asy
     }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SMART TEST START  POST /smart/:diskId/test
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/smart/:diskId/test', requireAuth, requirePermission('write'), async (req, res) => {
+    try {
+        const diskId = sanitizeDiskId(req.params.diskId);
+        if (!diskId) {
+            return res.status(400).json({ error: 'Invalid disk ID' });
+        }
+
+        const type = req.body.type;
+        if (!['short', 'long'].includes(type)) {
+            return res.status(400).json({ error: 'type must be "short" or "long"' });
+        }
+
+        await safeExec('smartctl', ['-t', type, `/dev/${diskId}`]);
+
+        smartTests.set(diskId, { running: true, startedAt: Date.now(), type });
+        log.info(`[storage] SMART ${type} test started on /dev/${diskId}`);
+
+        return res.json({ success: true });
+    } catch (err) {
+        log.error('[storage] smart test start error:', err.message);
+        return res.status(500).json({ error: 'Failed to start SMART test' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMART TEST STATUS  GET /smart/:diskId/status
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/smart/:diskId/status', requireAuth, async (req, res) => {
+    try {
+        const diskId = sanitizeDiskId(req.params.diskId);
+        if (!diskId) {
+            return res.status(400).json({ error: 'Invalid disk ID' });
+        }
+
+        let stdout = '';
+        try {
+            const result = await safeExec('smartctl', ['-j', '-a', `/dev/${diskId}`]);
+            stdout = result.stdout;
+        } catch (e) {
+            stdout = e.stdout || '';
+        }
+
+        if (!stdout) {
+            return res.json({ testInProgress: false, remainingPercent: 0 });
+        }
+
+        let data;
+        try { data = JSON.parse(stdout); } catch {
+            return res.json({ testInProgress: false, remainingPercent: 0 });
+        }
+
+        const remaining     = data.self_test_status?.remaining_percent ?? 0;
+        const testInProgress = remaining > 0;
+
+        if (!testInProgress) {
+            smartTests.delete(diskId);
+        }
+
+        return res.json({ testInProgress, remainingPercent: remaining });
+    } catch (err) {
+        log.error('[storage] smart test status error:', err.message);
+        return res.status(500).json({ error: 'Failed to get SMART test status' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILE LOCATION  GET /file-location?path=...
+// ─────────────────────────────────────────────────────────────────────────────
+
+function resolveFileLocation(filePath, storageConfig) {
+    const cfg        = storageConfig || {};
+    const cacheMount = cfg.cacheMount || '/mnt/cache';
+    const poolMount  = cfg.poolMount  || '/mnt/storage';
+
+    if (filePath.startsWith(cacheMount + '/') || filePath === cacheMount) {
+        return { diskType: 'cache', physicalLocation: cacheMount };
+    }
+    if (filePath.startsWith(poolMount + '/') || filePath === poolMount) {
+        return { diskType: 'pool', physicalLocation: poolMount };
+    }
+    return { diskType: 'unknown', physicalLocation: '' };
+}
+
+router.get('/file-location', requireAuth, (req, res) => {
+    try {
+        const rawPath = req.query.path;
+        if (!rawPath || typeof rawPath !== 'string') {
+            return res.status(400).json({ error: 'path query parameter is required' });
+        }
+
+        if (rawPath.includes('..') || rawPath.includes('\0')) {
+            return res.status(400).json({ error: 'Invalid path' });
+        }
+
+        const data     = getData();
+        const location = resolveFileLocation(rawPath, data.storageConfig);
+        return res.json(location);
+    } catch (err) {
+        log.error('[storage] file-location error:', err.message);
+        return res.status(500).json({ error: 'Failed to resolve file location' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILE LOCATIONS (batch)  POST /file-locations
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/file-locations', requireAuth, (req, res) => {
+    try {
+        const { paths } = req.body;
+        if (!Array.isArray(paths) || paths.length === 0 || paths.length > 500) {
+            return res.status(400).json({ error: 'paths must be a non-empty array (max 500)' });
+        }
+
+        const data      = getData();
+        const locations = {};
+
+        for (const p of paths) {
+            if (typeof p !== 'string' || p.includes('..') || p.includes('\0')) continue;
+            locations[p] = resolveFileLocation(p, data.storageConfig);
+        }
+
+        return res.json({ locations });
+    } catch (err) {
+        log.error('[storage] file-locations error:', err.message);
+        return res.status(500).json({ error: 'Failed to resolve file locations' });
+    }
+});
+
 module.exports = router;
