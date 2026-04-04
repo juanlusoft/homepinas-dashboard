@@ -1,0 +1,25 @@
+{
+  "name": "homepinas-dashboard-v3.5",
+  "version": "3.5.0",
+  "description": "HomePiNAS Dashboard v3.5 - Clean refactored version",
+  "main": "backend/index.js",
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "nodemon backend/index.js",
+    "build": "echo 'Build process TBD'",
+    "test": "jest",
+    "lint": "eslint backend/ frontend/",
+    "lint:fix": "eslint backend/ frontend/ --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juanlusoft/dashboard-v3.5.git"
+  },
+  "keywords": ["homepinas", "nas", "dashboard", "management"],
+  "author": "HomeLabs Club",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
