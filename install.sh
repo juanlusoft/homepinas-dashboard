@@ -575,8 +575,11 @@ mkdir -p \
     "${INSTALL_DIR}/config" \
     "${INSTALL_DIR}/backend/certs"
 
-# /mnt/storage solo si el path ya existe o no es un punto de montaje activo
-for dir in /mnt/storage /mnt/storage/.tmp /mnt/storage/.uploads-tmp; do
+# Crear todos los mount points declarados en ReadWritePaths del servicio systemd.
+# Si no existen, systemd falla al preparar el namespace con status=226/NAMESPACE
+# antes de que el proceso arranque siquiera.
+for dir in /mnt/storage /mnt/storage/.tmp /mnt/storage/.uploads-tmp \
+           /mnt/cache /mnt/parity /mnt/disks; do
     mkdir -p "$dir" 2>/dev/null || true
 done
 
