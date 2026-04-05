@@ -157,42 +157,18 @@ function registerRoutes(app: Express, version: string): void {
     // COMPATIBILITY ALIASES — endpoints called by frontend but not yet in a
     // dedicated route module
     // -------------------------------------------------------------------------
+    const { requireAuth }    = require('./auth');
+    const { _statsHandler, _disksHandler } = require('./routes/system');
 
-    // GET /api/dashboard — returns system stats wrapped for the dashboard widget
-    const { requireAuth } = require('./auth');
+    // GET /api/dashboard — system stats wrapped in { stats: ... } for the dashboard widget
     app.get('/api/dashboard', requireAuth, async (req: Request, res: Response) => {
-        try {
-            const { _statsHandler } = require('./routes/system');
-            // Capture the stats by calling the handler with a fake res
-            let stats: Record<string, unknown> = {};
-            const fakeRes = {
-                json: (data: unknown) => { stats = (data as Record<string, unknown>); },
-                status: () => fakeRes,
-            };
-            await _statsHandler(req, fakeRes as unknown as Response);
-            res.json({ stats });
-        } catch (e) {
-            res.status(500).json({ error: 'Failed to load dashboard stats' });
-        }
+        const origJson = res.json.bind(res);
+        (res as any).json = (data: unknown) => origJson({ stats: data });
+        return _statsHandler(req, res);
     });
 
-    // GET /api/storage/disks/detect — returns unpartitioned/new disks for wizard
-    // Proxies to /api/system/disks and filters for unformatted disks
-    app.get('/api/storage/disks/detect', requireAuth, async (req: Request, res: Response) => {
-        try {
-            const { _disksHandler } = require('./routes/system');
-            let disks: unknown[] = [];
-            const fakeRes = {
-                json: (data: unknown) => { disks = Array.isArray(data) ? data : []; },
-                status: () => fakeRes,
-            };
-            await _disksHandler(req, fakeRes as unknown as Response);
-            // Return all disks; the frontend filters by d.id
-            res.json(disks);
-        } catch (e) {
-            res.json([]);
-        }
-    });
+    // GET /api/storage/disks/detect — proxies /api/system/disks for the storage wizard
+    app.get('/api/storage/disks/detect', requireAuth, _disksHandler);
 }
 
 module.exports = { registerRoutes };
