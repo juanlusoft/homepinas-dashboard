@@ -160,15 +160,14 @@ async function init() {
             const data = await res.json();
 
             if (!res.ok || !data.success) {
-                if (
-                    res.status === 400 &&
-                    typeof data.message === 'string' &&
-                    data.message.toLowerCase().includes('already exists')
-                ) {
+                // 409 = admin already exists → go to login
+                if (res.status === 409) {
                     switchView('login');
                     navigateTo('/login', true);
+                    return;
                 }
-                throw new Error(data.message || t('common.error', 'Error al inicializar'));
+                const msg = data.error || data.message || t('common.error', 'Error al inicializar');
+                throw new Error(msg);
             }
 
             saveSession(data.sessionId, data.csrfToken);
