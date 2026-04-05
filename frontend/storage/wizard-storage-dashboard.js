@@ -270,7 +270,7 @@ export async function renderStorageDashboard() {
 
                         // Set health color CSS variable
                         const healthColors = { ok: '#4ade80', warning: '#fbbf24', critical: '#ef4444' };
-                        diskRow.style.setProperty('--health-color', healthColors[disk.health.status] || '#888');
+                        diskRow.style.setProperty('--health-color', healthColors[disk.health?.status] || '#888');
 
                         // Icon + Model + Serial
                         const diskIcon = disk.type === 'nvme' ? '🔌' : (disk.type === 'ssd' ? '⚡' : '💿');
@@ -297,8 +297,8 @@ export async function renderStorageDashboard() {
                             critical: t('diskHealth.critical', 'Crítico')
                         };
                         healthIndicator.innerHTML = `
-                            <span>${healthIcons[disk.health.status] || '⚪'}</span>
-                            <span class="health-${disk.health.status}">${healthTexts[disk.health.status] || 'Unknown'}</span>
+                            <span>${healthIcons[disk.health?.status] || '⚪'}</span>
+                            <span class="health-${disk.health?.status}">${healthTexts[disk.health?.status] || 'Unknown'}</span>
                         `;
                         diskRow.appendChild(healthIndicator);
 
