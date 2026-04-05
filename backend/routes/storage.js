@@ -304,30 +304,62 @@ router.post('/move-now', requireAuth, requirePermission('write'), async (req, re
 // ─────────────────────────────────────────────────────────────────────────────
 
 function parseSmartAttributes(smart) {
-    const attrs   = smart.ata_smart_attributes?.table || [];
+    const attrs    = smart.ata_smart_attributes?.table || [];
     const findAttr = (id) => attrs.find(a => a.id === id);
 
-    const reallocAttr   = findAttr(5);
-    const pendingAttr   = findAttr(197);
-    const ssdLifeAttr   = findAttr(231);
-    const tempAttr      = findAttr(194);
-    const powerOnAttr   = findAttr(9);
+    const reallocAttr  = findAttr(5);
+    const pendingAttr  = findAttr(197);
+    const ssdLifeAttr  = findAttr(231);
+    const tempAttr     = findAttr(194);
+    const powerOnAttr  = findAttr(9);
+    const rotationRate = smart.rotation_rate;
+
+    const reallocated  = reallocAttr  ? reallocAttr.raw.value  : 0;
+    const pending      = pendingAttr  ? pendingAttr.raw.value  : 0;
+    const tempC        = tempAttr     ? tempAttr.raw.value
+                                     : (smart.temperature?.current ?? null);
+    const powerOnHours = powerOnAttr  ? powerOnAttr.raw.value  : null;
+    const ssdLifeVal   = ssdLifeAttr  ? ssdLifeAttr.raw.value  : null;
+    const smartPassed  = smart.smart_status ? smart.smart_status.passed : null;
+
+    // Derive health status
+    const healthStatus = smartPassed === false ? 'critical'
+                       : (reallocated > 0 || pending > 0) ? 'warning'
+                       : 'ok';
+
+    // Derive disk type
+    const isHdd  = rotationRate && rotationRate > 0;
+    const isSsd  = !isHdd;
+
+    // Temperature status
+    const tempStatus = tempC === null ? null
+                     : tempC >= 55 ? 'critical'
+                     : tempC >= 45 ? 'warning'
+                     : 'ok';
+
+    // Power-on time formatted
+    const powerOnFormatted = powerOnHours == null ? null
+                           : powerOnHours < 24   ? `${powerOnHours}h`
+                           : `${Math.floor(powerOnHours / 24)}d`;
 
     return {
-        reallocatedSectors: reallocAttr   ? reallocAttr.raw.value   : 0,
-        pendingSectors:     pendingAttr   ? pendingAttr.raw.value   : 0,
-        ssdLife:            ssdLifeAttr   ? ssdLifeAttr.raw.value   : null,
-        temperature:        tempAttr      ? tempAttr.raw.value
-                                         : (smart.temperature?.current ?? null),
-        powerOnHours:       powerOnAttr   ? powerOnAttr.raw.value   : null,
-        smartPassed:        smart.smart_status ? smart.smart_status.passed : null,
-        model:              smart.model_name   || null
+        model:       smart.model_name || null,
+        serial:      smart.serial_number || null,
+        type:        isHdd ? 'hdd' : 'ssd',
+        health:      { status: healthStatus, smartPassed },
+        temperature: tempC !== null ? { current: tempC, status: tempStatus } : null,
+        powerOnTime: powerOnFormatted ? { formatted: powerOnFormatted } : null,
+        sectors:     isHdd ? { reallocated, pending } : null,
+        ssdLife:     isSsd && ssdLifeVal !== null ? {
+            tbw: null,
+            lifeRemainingFormatted: `${ssdLifeVal}%`
+        } : null,
     };
 }
 
 router.get('/disks/health', requireAuth, async (req, res) => {
     try {
-        const lsblkResult = await safeExec('lsblk', ['-J', '-o', 'NAME,TYPE']);
+        const lsblkResult = await safeExec('lsblk', ['-J', '-o', 'NAME,TYPE,SERIAL,MODEL']);
         const lsblk       = JSON.parse(lsblkResult.stdout);
         const physicalDisks = (lsblk.blockdevices || [])
             .filter(d => d.type === 'disk' && !/^(loop|zram|ram)/.test(d.name));
@@ -339,7 +371,7 @@ router.get('/disks/health', requireAuth, async (req, res) => {
 
             let smartData = null;
             try {
-                const { stdout } = await safeExec('smartctl', ['-A', '-j', `/dev/${diskId}`]);
+                const { stdout } = await safeExec('smartctl', ['-A', '-i', '-j', `/dev/${diskId}`]);
                 smartData = JSON.parse(stdout);
             } catch (e) {
                 if (e.stdout) {
@@ -347,13 +379,19 @@ router.get('/disks/health', requireAuth, async (req, res) => {
                 }
             }
 
-            const attrs = smartData ? parseSmartAttributes(smartData) : {};
-            disks.push({ diskId, ...attrs });
+            const attrs = smartData ? parseSmartAttributes(smartData) : {
+                model: device.model || null, serial: device.serial || null,
+                type: 'hdd', health: { status: 'unknown', smartPassed: null },
+                temperature: null, powerOnTime: null, sectors: null, ssdLife: null,
+            };
+            disks.push({ id: diskId, ...attrs });
         }
 
-        const hasWarning  = disks.some(d => d.reallocatedSectors > 0 || d.pendingSectors > 0);
-        const hasCritical = disks.some(d => d.smartPassed === false);
-        const summary     = hasCritical ? 'critical' : hasWarning ? 'warning' : 'healthy';
+        const summary = {
+            healthy:  disks.filter(d => d.health?.status === 'ok').length,
+            warning:  disks.filter(d => d.health?.status === 'warning').length,
+            critical: disks.filter(d => d.health?.status === 'critical').length,
+        };
 
         return res.json({ summary, disks });
     } catch (err) {
