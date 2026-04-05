@@ -915,6 +915,7 @@ function getRoleColor(role) {
     }
 }
 
+const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', async () => {
         const confirmed = await showConfirmModal(t('system.resetNAS', 'RESETEAR NAS'), t('system.confirmReset', '¿Seguro que quieres RESETEAR todo el NAS? Se borrará toda la configuración.'));
