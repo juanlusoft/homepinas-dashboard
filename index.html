@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HomePiNAS — NAS Management Dashboard for Raspberry Pi">
+    <title>HomePiNAS Dashboard</title>
+    <!-- Base CSS: variables, layout, sidebar, login, shared components -->
+    <!-- Module CSS is injected dynamically by frontend/modules/registry.js -->
+    <link rel="stylesheet" href="/frontend/style-base.css">
+</head>
+<body>
+    <a class="skip-to-content" href="#main-content">Saltar al contenido</a>
+    <div aria-live="polite" aria-atomic="true" class="sr-only" id="live-region"></div>
+
+    <div id="app">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             SETUP VIEW — shown on first run before any admin exists
+             ══════════════════════════════════════════════════════════════ -->
+        <div id="setup-view" class="view" role="main" aria-label="Configuración inicial">
+            <div class="login-card glass-card">
+                <div class="brand">
+                    <h1>HomePiNAS</h1>
+                    <p>Configuración inicial del sistema</p>
+                </div>
+                <form id="setup-form" novalidate>
+                    <div class="input-group">
+                        <input type="text" id="new-username" placeholder=" "
+                               autocomplete="username" required>
+                        <label for="new-username">Usuario administrador</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="new-password" placeholder=" "
+                               autocomplete="new-password" required>
+                        <label for="new-password">Contraseña</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="accept-terms">
+                        <label for="accept-terms">Acepto los términos de uso</label>
+                    </div>
+                    <button type="submit" class="btn-primary">Inicializar Sistema</button>
+                </form>
+            </div>
+            <!-- Theme / language controls visible on unauthenticated screens -->
+            <div class="settings-controls" aria-label="Ajustes de apariencia">
+                <button class="settings-btn" id="setup-theme-toggle" title="Cambiar tema"
+                        aria-label="Cambiar tema">🌙</button>
+                <button class="settings-btn" id="setup-lang-toggle" title="Cambiar idioma"
+                        aria-label="Cambiar idioma">🌐</button>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             STORAGE VIEW — storage wizard, mounted after setup
+             Content is generated dynamically by frontend/storage/wizard.js
+             ══════════════════════════════════════════════════════════════ -->
+        <div id="storage-view" class="view" role="main" aria-label="Configuración de almacenamiento">
+            <!-- JS fills this in -->
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             LOGIN VIEW
+             ══════════════════════════════════════════════════════════════ -->
+        <div id="login-view" class="view" role="main" aria-label="Iniciar sesión">
+            <div class="login-card glass-card">
+                <div class="brand">
+                    <h1>HomePiNAS</h1>
+                    <p>Panel de Administración</p>
+                </div>
+                <form id="login-form" novalidate>
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder=" "
+                               autocomplete="username" required>
+                        <label for="username">Usuario</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder=" "
+                               autocomplete="current-password" required>
+                        <label for="password">Contraseña</label>
+                    </div>
+                    <!-- 2FA code — hidden until server signals TOTP is required -->
+                    <div class="input-group" id="totp-input-group" style="display:none;">
+                        <input type="text" id="login-totp-code" placeholder=" "
+                               autocomplete="one-time-code" inputmode="numeric"
+                               maxlength="6" pattern="[0-9]{6}">
+                        <label for="login-totp-code">Código 2FA</label>
+                    </div>
+                    <button type="submit" class="btn-primary">Acceder al Sistema</button>
+                </form>
+            </div>
+            <div class="settings-controls" aria-label="Ajustes de apariencia">
+                <button class="settings-btn" id="login-theme-toggle" title="Cambiar tema"
+                        aria-label="Cambiar tema">🌙</button>
+                <button class="settings-btn" id="login-lang-toggle" title="Cambiar idioma"
+                        aria-label="Cambiar idioma">🌐</button>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             DASHBOARD VIEW — main authenticated layout
+             ══════════════════════════════════════════════════════════════ -->
+        <div id="dashboard-view" class="view" role="application" aria-label="Dashboard HomePiNAS">
+            <div class="dashboard-wrapper">
+
+                <!-- Top header bar -->
+                <header class="top-header" role="banner">
+                    <div class="top-header-left">
+                        <button class="header-btn" id="sidebar-toggle"
+                                title="Mostrar/ocultar menú" aria-label="Toggle sidebar"
+                                aria-expanded="true" aria-controls="main-sidebar">☰</button>
+                        <div class="top-header-logo" aria-label="HomePiNAS">
+                            HomePiNAS
+                            <span class="header-version">v3.5</span>
+                        </div>
+                    </div>
+                    <div class="top-header-right">
+                        <button class="header-btn" id="header-theme-toggle"
+                                title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
+                        <button class="header-btn" id="header-lang-toggle"
+                                title="Cambiar idioma" aria-label="Cambiar idioma">🌐</button>
+                        <button class="header-btn" id="header-notifications"
+                                title="Centro de notificaciones" aria-label="Notificaciones">🔔</button>
+                        <!-- Power / session menu -->
+                        <div class="power-menu-wrapper">
+                            <button class="header-btn" id="power-btn"
+                                    title="Opciones de sesión y energía"
+                                    aria-label="Menú de energía"
+                                    aria-haspopup="true" aria-expanded="false">⏻</button>
+                            <div class="power-dropdown" id="power-dropdown" role="menu">
+                                <button class="power-option" id="power-logout" role="menuitem">
+                                    <span class="power-option-icon" aria-hidden="true">🚪</span>
+                                    Cerrar sesión
+                                </button>
+                                <button class="power-option" id="power-reboot" role="menuitem">
+                                    <span class="power-option-icon" aria-hidden="true">🔄</span>
+                                    Reiniciar sistema
+                                </button>
+                                <button class="power-option power-option--danger" id="power-shutdown" role="menuitem">
+                                    <span class="power-option-icon" aria-hidden="true">⏻</span>
+                                    Apagar sistema
+                                </button>
+                            </div>
+                        </div>
+                        <!-- User menu -->
+                        <div class="header-user" id="header-user-menu"
+                             role="button" tabindex="0"
+                             aria-haspopup="true" aria-expanded="false"
+                             aria-label="Menú de usuario">
+                            <div class="header-user-avatar" id="user-avatar-letter"
+                                 aria-hidden="true">A</div>
+                            <span class="header-user-name" id="username-display">Admin</span>
+                            <!-- User dropdown injected by JS -->
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Sidebar + content -->
+                <div class="dashboard-body">
+                    <nav class="sidebar" id="main-sidebar"
+                         role="navigation" aria-label="Menú principal">
+
+                        <div class="sidebar-section" aria-hidden="true">Principal</div>
+                        <ul class="nav-links" role="tablist">
+                            <li data-view="dashboard" role="tab" tabindex="0"
+                                aria-selected="true" class="active">
+                                <span class="nav-icon" aria-hidden="true">📊</span>
+                                <span class="nav-text">Dashboard</span>
+                            </li>
+                            <li data-view="docker" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🐳</span>
+                                <span class="nav-text">Docker</span>
+                            </li>
+                            <li data-view="storage" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">💾</span>
+                                <span class="nav-text">Almacenamiento</span>
+                            </li>
+                            <li data-view="files" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">📁</span>
+                                <span class="nav-text">Archivos</span>
+                            </li>
+                            <li data-view="network" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🌐</span>
+                                <span class="nav-text">Red</span>
+                            </li>
+                            <li data-view="system" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">⚙️</span>
+                                <span class="nav-text">Sistema</span>
+                            </li>
+                            <li data-view="terminal" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">💻</span>
+                                <span class="nav-text">Terminal</span>
+                            </li>
+                        </ul>
+
+                        <div class="sidebar-section" aria-hidden="true">Servicios</div>
+                        <ul class="nav-links" role="tablist">
+                            <li data-view="backup" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">📦</span>
+                                <span class="nav-text">Backup</span>
+                            </li>
+                            <li data-view="cloud-sync" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">☁️</span>
+                                <span class="nav-text">Cloud Sync</span>
+                            </li>
+                            <li data-view="cloud-backup" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🔒</span>
+                                <span class="nav-text">Cloud Backup</span>
+                            </li>
+                            <li data-view="vpn" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🔐</span>
+                                <span class="nav-text">VPN Server</span>
+                            </li>
+                            <li data-view="homestore" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🏪</span>
+                                <span class="nav-text">HomeStore</span>
+                            </li>
+                        </ul>
+
+                        <div class="sidebar-section" aria-hidden="true">Administración</div>
+                        <ul class="nav-links" role="tablist">
+                            <li data-view="users" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">👥</span>
+                                <span class="nav-text">Usuarios</span>
+                            </li>
+                            <li data-view="logs" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">📋</span>
+                                <span class="nav-text">Registros</span>
+                            </li>
+                            <li data-view="shortcuts" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🔗</span>
+                                <span class="nav-text">Atajos</span>
+                            </li>
+                            <li data-view="active-backup" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🔄</span>
+                                <span class="nav-text">Active Backup</span>
+                            </li>
+                            <li data-view="active-directory" role="tab" tabindex="0" aria-selected="false">
+                                <span class="nav-icon" aria-hidden="true">🏢</span>
+                                <span class="nav-text">Active Directory</span>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Main content area — modules render here -->
+                    <main class="content" id="main-content" role="main" tabindex="-1">
+                        <div class="page-header">
+                            <h2 class="page-title" id="view-title">Dashboard</h2>
+                            <div class="page-actions" id="page-actions"></div>
+                        </div>
+                        <div id="dashboard-content"></div>
+                    </main>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /#app -->
+
+    <script type="module" src="/frontend/main.js"></script>
+</body>
+</html>
