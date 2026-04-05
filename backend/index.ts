@@ -15,7 +15,7 @@ const path    = require('path');
 // Core utilities
 const log = require('./logger');
 const { validateEnv }                           = require('./validate-env');
-const { initSessionDb, startSessionCleanup }   = require('./utils/session');
+const { initSessionDb, startSessionCleanup }   = require('./session');
 
 // Split modules
 const { applyMiddleware } = require('./middleware');
