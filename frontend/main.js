@@ -59,7 +59,12 @@ function switchView(viewName, skipRender = false) {
  */
 async function renderContent(view) {
     state.currentView = view;
-    await loadModule(view, dashboardContent);
+    // The storage wizard has its own top-level view div — render directly into it.
+    // All other modules render into #dashboard-content inside #dashboard-view.
+    const container = view === 'storage'
+        ? (views.storage || dashboardContent)
+        : dashboardContent;
+    await loadModule(view, container);
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
