@@ -7,7 +7,7 @@
 
 import type { ErrorRequestHandler } from 'express-serve-static-core';
 
-const log = require('../utils/logger');
+const log = require('./logger');
 
 /**
  * Express error-handling middleware (4 args required by Express)

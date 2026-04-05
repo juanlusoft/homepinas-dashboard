@@ -15,7 +15,7 @@ const {
     deleteCsrfToken,
     cleanExpiredCsrfTokens,
     CSRF_TOKEN_DURATION
-} = require('../utils/session');
+} = require('./utils/session');
 
 /**
  * Generate a CSRF token for a session

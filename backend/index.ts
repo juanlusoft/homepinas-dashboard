@@ -13,8 +13,8 @@ const fs      = require('fs');
 const path    = require('path');
 
 // Core utilities
-const log = require('./utils/logger');
-const { validateEnv }                           = require('./utils/validate-env');
+const log = require('./logger');
+const { validateEnv }                           = require('./validate-env');
 const { initSessionDb, startSessionCleanup }   = require('./utils/session');
 
 // Split modules
@@ -75,7 +75,7 @@ startSessionCleanup();
 // Terminal WebSocket handler (optional — requires node-pty)
 let setupTerminalWebSocket: ((server: import('http').Server | import('https').Server) => void) | null;
 try {
-    setupTerminalWebSocket = require('./utils/terminal-ws').setupTerminalWebSocket;
+    setupTerminalWebSocket = require('./terminal-ws').setupTerminalWebSocket;
 } catch (e) {
     log.warn('[WARN] Terminal WebSocket not available - node-pty may not be installed');
     setupTerminalWebSocket = null;

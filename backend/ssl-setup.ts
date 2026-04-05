@@ -23,7 +23,7 @@ const path  = require('path');
 const https = require('https');
 const http  = require('http');
 
-const log = require('./utils/logger');
+const log = require('./logger');
 
 // ---------------------------------------------------------------------------
 // Type definitions
@@ -195,13 +195,13 @@ function createServer(app: Express, opts: ServerOptions): ServerResult {
         }
 
         // Start error monitoring (if enabled in config)
-        const { startErrorMonitor } = require('./utils/error-monitor');
+        const { startErrorMonitor } = require('./error-monitor');
         startErrorMonitor();
 
         // Start health monitor with two-tier intervals:
         //   Fast (pool, mounts, cached temps): every 5 min
         //   Slow (SMART refresh, SnapRAID):    every 30 min
-        const { startHealthMonitor } = require('./utils/health-monitor');
+        const { startHealthMonitor } = require('./health-monitor');
         startHealthMonitor(300000, 1800000);
     });
 

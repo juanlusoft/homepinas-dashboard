@@ -9,7 +9,7 @@
 
 import type { Express, Request, Response } from 'express-serve-static-core';
 
-const { metricsMiddleware, generateMetrics } = require('./utils/metrics');
+const { metricsMiddleware, generateMetrics } = require('./metrics');
 
 // API route modules
 const systemRoutes          = require('./routes/system');

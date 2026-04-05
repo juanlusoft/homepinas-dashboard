@@ -5,8 +5,8 @@
 
 import type { RequestHandler } from 'express-serve-static-core';
 
-const { validateSession } = require('../utils/session');
-const { logSecurityEvent } = require('../utils/security');
+const { validateSession } = require('./utils/session');
+const { logSecurityEvent } = require('./security');
 
 /**
  * Require authentication middleware

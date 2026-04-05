@@ -15,11 +15,11 @@ const path = require('path');
 const cors    = require('cors');
 const helmet  = require('helmet');
 
-const log = require('./utils/logger');
+const log = require('./logger');
 
-const { generalLimiter }  = require('./middleware/rateLimit');
-const { csrfProtection }  = require('./middleware/csrf');
-const { errorHandler }    = require('./middleware/error-handler');
+const { generalLimiter }  = require('./rateLimit');
+const { csrfProtection }  = require('./csrf');
+const { errorHandler }    = require('./error-handler');
 
 const cloudSyncRoutes   = require('./routes/cloud-sync');
 const cloudBackupRoutes = require('./routes/cloud-backup');
