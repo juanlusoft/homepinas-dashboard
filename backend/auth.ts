@@ -5,7 +5,7 @@
 
 import type { RequestHandler } from 'express-serve-static-core';
 
-const { validateSession } = require('./utils/session');
+const { validateSession } = require('./session');
 const { logSecurityEvent } = require('./security');
 
 /**
