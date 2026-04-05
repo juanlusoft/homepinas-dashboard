@@ -7,7 +7,7 @@ import { escapeHtml, formatBytes, debounce, formatUptime } from './utils.js';
 // Core modules
 import { initAPI, authFetch, loadSession, saveSession, clearSession } from './api.js';
 import { showNotification, showConfirmModal, celebrateWithConfetti, dismissNotification, cleanupNotifications } from './notifications.js';
-import { navigateTo, getViewFromPath, handleRouteChange, switchView as routerSwitchView, setupRouteListeners, cleanupRouter } from './router.js';
+import { initRouter, navigateTo, getViewFromPath, handleRouteChange, switchView as routerSwitchView, setupRouteListeners, cleanupRouter } from './router.js';
 import * as StateModule from './state.js';
 import { loadModule } from './modules/registry.js';
 import { startDiskDetectionPolling, stopGlobalPolling } from './disk-management/index.js';
@@ -191,6 +191,44 @@ async function init() {
 
     initAPI(state);
     await initI18n();
+
+    // ── Router & sidebar init ─────────────────────────────────────────────────
+    const viewsMap = {
+        dashboard: 'Dashboard', docker: 'Docker', storage: 'Almacenamiento',
+        files: 'Archivos', network: 'Red', system: 'Sistema', terminal: 'Terminal',
+        backup: 'Backup', 'cloud-sync': 'Cloud Sync', 'cloud-backup': 'Cloud Backup',
+        vpn: 'VPN Server', homestore: 'HomeStore', users: 'Usuarios',
+        logs: 'Registros', shortcuts: 'Atajos',
+        'active-backup': 'Active Backup', 'active-directory': 'Active Directory',
+    };
+    const navLinks = document.querySelectorAll('[data-view]');
+    const viewTitle = document.getElementById('view-title');
+
+    // Export renderContent so router.js can call it via window
+    window.renderContent = renderContent;
+
+    initRouter(state, viewsMap, views, navLinks, viewTitle);
+
+    // Sidebar click handler
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            const view = link.dataset.view;
+            if (!view || !state.isAuthenticated) return;
+
+            navLinks.forEach(l => {
+                l.classList.remove('active');
+                l.setAttribute('aria-selected', 'false');
+            });
+            link.classList.add('active');
+            link.setAttribute('aria-selected', 'true');
+
+            if (viewTitle) viewTitle.textContent = viewsMap[view] || view;
+            switchView(view);
+            navigateTo('/' + view);
+        });
+    });
+    // ─────────────────────────────────────────────────────────────────────────
+
     const isAuthed = await initAuth();
 
     if (isAuthed) {
