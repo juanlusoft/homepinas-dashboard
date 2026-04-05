@@ -8,7 +8,7 @@ import { authFetch } from '../api.js';
 import { showNotification, showConfirmModal } from '../notifications.js';
 import { renderContent } from '../main.js';
 import { escapeHtml } from '../utils.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 
 const API_BASE = `${window.location.origin}/api`;
 

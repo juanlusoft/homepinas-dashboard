@@ -8,7 +8,7 @@
 import { authFetch } from '../api.js';
 import { showNotification, celebrateWithConfetti } from '../notifications.js';
 import { state } from '../state.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 import { wizardState } from './wizard-state.js';
 import { navigateWizard } from './wizard-navigation.js';
 

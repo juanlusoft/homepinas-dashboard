@@ -10,7 +10,7 @@ import { authFetch } from '../api.js';
 import { showNotification, showConfirmModal } from '../notifications.js';
 import { state } from '../state.js';
 import { escapeHtml } from '../utils.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // MODULE STATE

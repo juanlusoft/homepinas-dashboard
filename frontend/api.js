@@ -4,7 +4,7 @@
  * @module api
  */
 
-import { t } from '../i18n.js';
+import { t } from '/frontend/i18n.js';
 import { showNotification } from './notifications.js';
 import { switchView } from './router.js';
 

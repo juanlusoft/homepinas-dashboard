@@ -6,7 +6,7 @@
  */
 
 import { escapeHtml, formatBytes } from '../utils.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 import { state } from '../state.js';
 import { wizardState, saveWizardState, clearWizardState } from './wizard-state.js';
 import { updateParityDiskOptions, updateCacheDiskOptions, getDiskIcon, parseDiskSize } from './wizard-disk-selection.js';

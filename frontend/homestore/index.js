@@ -3,7 +3,7 @@
  */
 import { authFetch } from '../api.js';
 import { showNotification } from '../notifications.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 
 let _listeners = [];
 export function cleanup() {

@@ -30,7 +30,7 @@ import { renderLogsView } from '../logs/index.js';
 import { renderUsersView } from '../users/index.js';
 import { renderSystemView } from '../system/index.js';
 import { renderUPSSection } from '../ups/index.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 
 // Sub-module imports
 import { wizardState, loadWizardState, saveWizardState, clearWizardState } from './wizard-state.js';

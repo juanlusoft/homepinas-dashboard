@@ -1,7 +1,7 @@
 // HomePiNAS Dashboard v3 - Bootstrap Entry Point
 // This file is the application bootstrap. All business logic is in modules/
 
-import { initI18n, t, applyTranslations, getCurrentLang } from './i18n.js';
+import { initI18n, t, applyTranslations, getCurrentLang } from '/frontend/i18n.js';
 import { escapeHtml, formatBytes, debounce, formatUptime } from './utils.js';
 
 // Core modules

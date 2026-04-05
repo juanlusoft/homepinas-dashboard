@@ -6,7 +6,7 @@
  */
 
 import { escapeHtml } from '../utils.js';
-import { t } from '../../i18n.js';
+import { t } from '/frontend/i18n.js';
 import { wizardState, saveWizardState } from './wizard-state.js';
 
 // ════════════════════════════════════════════════════════════════════════════════
