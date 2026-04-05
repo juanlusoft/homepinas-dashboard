@@ -10,3 +10,5 @@ export async function render(container) {
 }
 
 export function cleanup() {}
+
+export { render as renderLogsView };
