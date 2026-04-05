@@ -281,7 +281,7 @@ export async function renderStorageDashboard() {
                                 <span style="font-size: 1.3rem;">${diskIcon}</span>
                                 <div>
                                     <div style="font-weight: 600;">${escapeHtml(disk.model)}</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-dim);">${escapeHtml(disk.id)} · SN: ${escapeHtml(disk.serial.substring(0, 12)) || 'N/A'}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-dim);">${escapeHtml(disk.id)} · SN: ${escapeHtml(disk.serial?.substring(0, 12) || 'N/A') || 'N/A'}</div>
                                 </div>
                             </div>
                         `;
@@ -319,8 +319,8 @@ export async function renderStorageDashboard() {
                         }
 
                         metricsDiv.innerHTML += `
-                            <div><span style="color: var(--text-dim);">${t('diskHealth.powerOn', 'Encendido')}:</span> <strong>${escapeHtml(disk.powerOnTime.formatted)}</strong></div>
-                            <div><span style="color: var(--text-dim);">${t('diskHealth.temperature', 'Temp')}:</span> <strong class="temp-${disk.temperature.status}">${disk.temperature.current}°C</strong></div>
+                            <div><span style="color: var(--text-dim);">${t('diskHealth.powerOn', 'Encendido')}:</span> <strong>${escapeHtml(disk.powerOnTime?.formatted || 'N/A')}</strong></div>
+                            <div><span style="color: var(--text-dim);">${t('diskHealth.temperature', 'Temp')}:</span> <strong class="temp-${disk.temperature?.status || 'unknown'}">${disk.temperature?.current ?? 'N/A'}${disk.temperature?.current != null ? '°C' : ''}</strong></div>
                         `;
                         diskRow.appendChild(metricsDiv);
 
